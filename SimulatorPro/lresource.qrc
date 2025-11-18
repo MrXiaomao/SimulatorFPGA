@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resource/image/client.png</file>
+        <file>resource/image/list.png</file>
+        <file>resource/image/server.png</file>
+        <file>resource/image/add.png</file>
+        <file>resource/image/delete.png</file>
+        <file>resource/image/remove.png</file>
+        <file>resource/image/send.png</file>
+        <file>resource/image/connect.png</file>
+        <file>resource/image/disConnect.png</file>
+        <file>resource/image/start.png</file>
+        <file>resource/image/stop.png</file>
+        <file>resource/image/create.png</file>
+        <file>resource/image/create2.png</file>
+        <file>resource/image/file-folder.png</file>
+        <file>resource/image/folder_add .png</file>
+        <file>resource/image/folder_delete.png</file>
+        <file>resource/image/folder-open.png</file>
+        <file>resource/image/copy.png</file>
+        <file>resource/image/paste.png</file>
+    </qresource>
+</RCC>

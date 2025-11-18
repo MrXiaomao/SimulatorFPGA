@@ -1,28 +1,11 @@
-<<<<<<< HEAD
 #ifndef LITETHREAD_H
 #define LITETHREAD_H
 
-=======
-/*
- * @Author: MrPan
- * @Date: 2025-11-13 11:35:59
- * @LastEditors: Maoxiaoqing
- * @LastEditTime: 2025-11-18 17:05:39
- * @Description: 请填写简介
- */
-#ifndef LITETHREAD_H
-#define LITETHREAD_H
- 
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 #include <QThread>
 typedef std::function<void()> LPThreadWorkProc;
 class QLiteThread :public QThread {
     Q_OBJECT
-<<<<<<< HEAD
 
-=======
- 
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 private:
     LPThreadWorkProc m_pfThreadWorkProc = 0;
 

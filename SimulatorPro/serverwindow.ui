@@ -357,7 +357,6 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-<<<<<<< HEAD
          <widget class="QPushButton" name="pushButton_update">
           <property name="text">
            <string>更新参数</string>
@@ -369,8 +368,6 @@
          </widget>
         </item>
         <item>
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -451,11 +448,8 @@
  </widget>
  <resources>
   <include location="lresource.qrc"/>
-<<<<<<< HEAD
   <include location="../../3rdParty/resource/resource.qrc"/>
   <include location="../../3rdParty/resource/resource.qrc"/>
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
  </resources>
  <connections/>
 </ui>

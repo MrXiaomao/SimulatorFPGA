@@ -13,10 +13,7 @@ namespace Ui {
 class ClientWindow;
 }
 
-<<<<<<< HEAD
 class IPlugin;
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 class ClientData : public QObject
 {
     Q_OBJECT
@@ -29,26 +26,16 @@ public:
     QString guid; //唯一标识
     QString sessionName; //名称
     QString remoteIp;//远程地址
-<<<<<<< HEAD
     quint32 remotePort = 8000;//远程端口
     bool bindSocket = false;//绑定本地端口
     quint32 loacalPort = 6000;//本地端口
-=======
-    quint32 remotePort;//远程端口
-    bool bindSocket;//绑定本地端口
-    quint32 loacalPort;//本地端口
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     QString startCommand;//开始测量
     QString stopCommand;//停止测量
     QString externTriggerCommand;//外部触发指令
     QStringList commandsName;//请求包名称
     QStringList askCommands;//请求包
     QStringList ackCommands;//返回包
-<<<<<<< HEAD
     bool enableLoopback = false;//是否启用回路（如果发现指令没配置，是否按原指令内容返回）
-=======
-    bool enableLoopback;//是否启用回路（如果发现指令没配置，是否按原指令内容返回）
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     QString pluginName;//插件名称
     QVariantMap params; //插件参数列表
 
@@ -151,11 +138,7 @@ public:
     Q_SIGNAL void reportSocketClosed();
     Q_SIGNAL void reportTransferData(QByteArray&);
     Q_SIGNAL void reportNumberOfPackets(quint64&);
-<<<<<<< HEAD
     Q_SIGNAL void reportFileInfo(quint32& fileSize, quint64& totalPackets);
-=======
-    Q_SIGNAL void reportfileInfo(quint32& fileSize, quint64& totalPackets);
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     Q_SIGNAL void reportRecvLog(QByteArray&);
     Q_SIGNAL void reportSendLog(QByteArray&, bool isException = false);
 
@@ -170,7 +153,6 @@ public:
     Q_SLOT void stopTransfer();
     Q_SLOT void replyTransferData(QByteArray&);
     Q_SLOT void replyNumberOfPackets(quint64&);
-<<<<<<< HEAD
     Q_SLOT void replyFileInfo(quint32& fileSize, quint64& totalPackets);
 
     Q_SLOT void load();
@@ -178,27 +160,14 @@ public:
     Q_SLOT void writeLog(QString&);
 
 private slots:
-=======
-    Q_SLOT void replyfileInfo(quint32& fileSize, quint64& totalPackets);
-
-    Q_SLOT void load();
-    Q_SLOT void writeLog(QString&);
-
-private slots:
-    void on_refreshPara_clicked();//更新参数，目前只更新数据发送时间间隔
-
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     void on_pushButton_connect_clicked();
 
     void on_pushButton_disconnect_clicked();
 
     void on_toolButton_send_clicked();
 
-<<<<<<< HEAD
     void on_pushButton_update_clicked();
 
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 private:
     Ui::ClientWindow *ui;
     ClientData* mClientData = nullptr;
@@ -206,11 +175,8 @@ private:
     QTcpSocket* mTcpClient = nullptr;
     QTimer* mTimer = nullptr;
     QElapsedTimer mElapsedTimer;
-<<<<<<< HEAD
     IPlugin* mCurrentPlugin = nullptr;
     QMap<QString, IPlugin*> mPlugins;
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 };
 
 #endif // CLIENTWINDOW_H

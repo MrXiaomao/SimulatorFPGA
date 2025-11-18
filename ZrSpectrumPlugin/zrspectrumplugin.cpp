@@ -4,10 +4,6 @@
 #include <QRandomGenerator>
 #include <QElapsedTimer>
 #include <QFile>
-<<<<<<< HEAD
-=======
-
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 #include <QtConcurrent>
 
 QByteArray quint32ToBytes(quint32 value, bool littleEndian = false)
@@ -71,13 +67,9 @@ bool ZrSpectrumPlugin::initialize() {
         QFile binaryFile(binaryFilePath);
         if (!binaryFile.open(QIODevice::ReadOnly)) {
             qCritical() << QString("无法打开二进制文件: %1").arg(binaryFilePath);
-<<<<<<< HEAD
             mTimerThread->deleteLater();
             mTimerThread = nullptr;
             return ;
-=======
-            return;
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
         }
 
         qDebug() << QString("开始读取二进制文件: %1").arg(binaryFilePath);
@@ -87,13 +79,9 @@ bool ZrSpectrumPlugin::initialize() {
         if (!fileData) {
             qWarning() << "内存映射失败，使用传统文件读取";
             binaryFile.close();
-<<<<<<< HEAD
             mTimerThread->deleteLater();
             mTimerThread = nullptr;
             return ;
-=======
-            return;
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
         }
 
         qint64 fileSize = binaryFile.size();
@@ -183,18 +171,12 @@ bool ZrSpectrumPlugin::initialize() {
             qint64 sleepTime = mSampleFrequency - elapsedTimer.elapsed();
             QThread::msleep(sleepTime < 0 ? 0 : sleepTime);
         }
-<<<<<<< HEAD
 
 		// 清理资源
         binaryFile.unmap(fileData);
         binaryFile.close();
         mTimerThread->deleteLater();
         mTimerThread = nullptr;
-=======
-        // 清理资源
-        binaryFile.unmap(fileData);
-        binaryFile.close();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     });
     mTimerThread->start();
 

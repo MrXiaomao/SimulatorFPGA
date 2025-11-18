@@ -134,7 +134,6 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
         }
 
         QString pluginName = ui->comboBox_pluginName->currentText();
-<<<<<<< HEAD
         auto iter = mPlugins.find(pluginName);
         if (iter == mPlugins.end()){
             PluginManager *pluginManager = PluginManager::instance();
@@ -146,12 +145,6 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
 
         if (mCurrentPlugin){
             QVariantMap parameter = mCurrentPlugin->invoke("readParameters").toMap();
-=======
-        PluginManager *pluginManager = PluginManager::instance();
-        IPlugin* plugin = pluginManager->getPlugin(pluginName);
-        if (plugin){
-            QVariantMap parameter = plugin->invoke("readParameters").toMap();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             ui->tableWidget_parameters->clearContents();
             ui->tableWidget_parameters->setRowCount(0);
             if (parameter.size() > 0){
@@ -203,15 +196,12 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
 ServerWindow::~ServerWindow()
 {
     stopTransfer(mTcpClient);
-<<<<<<< HEAD
 
     for (auto iter = mPlugins.begin(); iter != mPlugins.end(); ++iter){
         IPlugin* plugin = qobject_cast<IPlugin*>(iter.value());
         plugin->deleteLater();
     }
 
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     delete ui;
 }
 
@@ -227,21 +217,15 @@ void ServerWindow::load()
 
     ui->tableWidget->clearContents();
     ui->tableWidget->setRowCount(serverData->commandsName.size());
-<<<<<<< HEAD
 
     QAbstractItemModel* model = ui->tableWidget->model();
     model->blockSignals(true);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     for (int i=0; i<serverData->commandsName.size(); ++i){
         ui->tableWidget->setItem(i, 0, new QTableWidgetItem(serverData->commandsName.at(i)));
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(serverData->askCommands.at(i)));
         ui->tableWidget->setItem(i, 2, new QTableWidgetItem(serverData->ackCommands.at(i)));
     }
-<<<<<<< HEAD
     model->blockSignals(false);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     ui->tableWidget_parameters->clearContents();
     ui->tableWidget_parameters->setRowCount(0);
@@ -276,37 +260,7 @@ void ServerWindow::load()
 
 void ServerWindow::on_pushButton_start_clicked()
 {
-<<<<<<< HEAD
     this->updateData();
-=======
-    ServerData *serverData = mServerData;//reinterpret_cast<ClientData*>(storedPtr);
-    serverData->localIp = ui->comboBox_ip->currentText();
-    serverData->loacalPort = ui->spinBox_localPort->value();
-    serverData->pluginName = ui->comboBox_pluginName->currentText();
-    serverData->startCommand = ui->lineEdit_startCommand->text();
-    serverData->stopCommand = ui->lineEdit_stopCommand->text();
-    serverData->externTriggerCommand = ui->lineEdit_externTriggerCommand->text();
-
-    serverData->commandsName.clear();
-    serverData->askCommands.clear();
-    serverData->ackCommands.clear();
-    for (int i=0; i<ui->tableWidget->rowCount(); ++i){
-        QString text0 = ui->tableWidget->item(i, 0)->text();
-        QString text1 = ui->tableWidget->item(i, 1)->text();
-        QString text2 = ui->tableWidget->item(i, 2)->text();
-        serverData->commandsName << text0;
-        serverData->askCommands << text1;
-        serverData->ackCommands << text2;
-    }
-
-    serverData->enableLoopback = ui->checkBox_loopback->isChecked();
-    serverData->params.clear();
-    for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
-        serverData->params[ui->tableWidget_parameters->item(i, 0)->text()] = ui->tableWidget_parameters->item(i, 1)->text();
-    }
-
-    serverData->save();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     if (mTcpServer->listen(QHostAddress(ui->comboBox_ip->currentText()), ui->spinBox_localPort->value())){
         ui->pushButton_start->setEnabled(false);
@@ -442,23 +396,12 @@ void ServerWindow::writeSendLog(QByteArray& command, bool isException/* = false*
 
 void ServerWindow::startTransfer(QTcpSocket* /*tcpSocket*/)
 {
-<<<<<<< HEAD
     if (mCurrentPlugin){
         mElapsedTimer.restart();
         mTimer->start(50);
 
         mCurrentPlugin->invoke("writeParameters", mServerData->params);
         connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
-=======
-    PluginManager *pluginManager = PluginManager::instance();
-    IPlugin* plugin = pluginManager->getPlugin(mServerData->pluginName);
-    if (plugin){
-        mElapsedTimer.restart();
-        mTimer->start(50);
-
-        plugin->invoke("writeParameters", mServerData->params);
-        connect(plugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             if (event == "waveform"){
                 QByteArray waveformBytes = data["data"].toByteArray();
                 QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
@@ -468,11 +411,7 @@ void ServerWindow::startTransfer(QTcpSocket* /*tcpSocket*/)
                 QMetaObject::invokeMethod(this, "reportNumberOfPackets", Qt::DirectConnection, Q_ARG(quint64&, numberOfPackets));
             }
         });
-<<<<<<< HEAD
         mCurrentPlugin->initialize();
-=======
-        plugin->initialize();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     }
 }
 
@@ -482,17 +421,9 @@ void ServerWindow::stopTransfer(QTcpSocket* /*tcpSocket*/)
         return;
 
     mTimer->stop();
-<<<<<<< HEAD
     if (mCurrentPlugin){
         disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
         mCurrentPlugin->shutdown();
-=======
-    PluginManager *pluginManager = PluginManager::instance();
-    IPlugin* plugin = pluginManager->getPlugin(mServerData->pluginName);
-    if (plugin){
-        disconnect(plugin, &IPlugin::notifyEvent, this, nullptr);
-        plugin->shutdown();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     }
 }
 
@@ -539,7 +470,6 @@ void ServerWindow::writeLog(QString& log)
     ui->textEdit->append(QString("%1 %2").arg(QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]"), QString(command.toHex(' ').toUpper())));
 #endif
 }
-<<<<<<< HEAD
 
 void ServerWindow::on_pushButton_update_clicked()
 {
@@ -581,5 +511,3 @@ void ServerWindow::updateData()
     serverData->save();
 }
 
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010

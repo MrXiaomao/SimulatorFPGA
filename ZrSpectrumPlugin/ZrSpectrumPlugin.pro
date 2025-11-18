@@ -30,17 +30,10 @@ unix {
 !isEmpty(target.path): INSTALLS += target
 
 #指定编译产生的文件分门别类放到对应目录
-<<<<<<< HEAD
 MOC_DIR     = temp/moc
 RCC_DIR     = temp/rcc
 UI_DIR      = temp/ui
 OBJECTS_DIR = temp/obj
-=======
-MOC_DIR     = $$PWD/../../build_SimulatorPro/ZrSpectrumPlugin/temp/moc
-RCC_DIR     = $$PWD/../../build_SimulatorPro/ZrSpectrumPlugin/temp/rcc
-UI_DIR      = $$PWD/../../build_SimulatorPro/ZrSpectrumPlugin/temp/ui
-OBJECTS_DIR = $$PWD/../../build_SimulatorPro/ZrSpectrumPlugin/temp/obj
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
 DESTDIR = $$PWD/../../build_SimulatorPro
 contains(QT_ARCH, x86_64) {

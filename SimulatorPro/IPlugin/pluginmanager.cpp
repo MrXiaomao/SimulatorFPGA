@@ -73,11 +73,7 @@ bool PluginManager::unloadPlugins()
 IPlugin* PluginManager::getPlugin(const QString& pluginName) const
 {
     PluginRegistry* pluginRegistry = PluginRegistry::instance();
-<<<<<<< HEAD
     return pluginRegistry->getPlugin(pluginName)->clone();
-=======
-    return pluginRegistry->getPlugin(pluginName);
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 }
 
 QStringList PluginManager::getPluginNames() const

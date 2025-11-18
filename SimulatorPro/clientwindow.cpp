@@ -54,10 +54,7 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
 
     ui->pushButton_connect->setEnabled(true);
     ui->pushButton_disconnect->setEnabled(false);
-<<<<<<< HEAD
     ui->pushButton_update->setEnabled(false);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     connect(this, &ClientWindow::reportRecvLog, this, &ClientWindow::replyRecvLog);
     connect(this, &ClientWindow::reportSendLog, this, &ClientWindow::replySendLog);
@@ -212,7 +209,6 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
         }
 
         QString pluginName = ui->comboBox_pluginName->currentText();
-<<<<<<< HEAD
         auto iter = mPlugins.find(pluginName);
         if (iter == mPlugins.end()){
             PluginManager *pluginManager = PluginManager::instance();
@@ -224,12 +220,6 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
 
         if (mCurrentPlugin){
             QVariantMap parameter = mCurrentPlugin->invoke("readParameters").toMap();
-=======
-        PluginManager *pluginManager = PluginManager::instance();
-        IPlugin* plugin = pluginManager->getPlugin(pluginName);
-        if (plugin){
-            QVariantMap parameter = plugin->invoke("readParameters").toMap();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             ui->tableWidget_parameters->clearContents();
             ui->tableWidget_parameters->setRowCount(0);
             if (parameter.size() > 0){
@@ -279,25 +269,18 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
 
     connect(this, &ClientWindow::reportTransferData, this, &ClientWindow::replyTransferData);
     connect(this, &ClientWindow::reportNumberOfPackets, this, &ClientWindow::replyNumberOfPackets);
-<<<<<<< HEAD
     connect(this, &ClientWindow::reportFileInfo, this, &ClientWindow::replyFileInfo);
-=======
-    connect(this, &ClientWindow::reportfileInfo, this, &ClientWindow::replyfileInfo);
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 }
 
 ClientWindow::~ClientWindow()
 {
     stopTransfer();
-<<<<<<< HEAD
 
     for (auto iter = mPlugins.begin(); iter != mPlugins.end(); ++iter){
         IPlugin* plugin = qobject_cast<IPlugin*>(iter.value());
         plugin->deleteLater();
     }
 
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     delete ui;
 }
 
@@ -315,21 +298,15 @@ void ClientWindow::load()
 
     ui->tableWidget->clearContents();
     ui->tableWidget->setRowCount(clientData->commandsName.size());
-<<<<<<< HEAD
 
     QAbstractItemModel* model = ui->tableWidget->model();
     model->blockSignals(true);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     for (int i=0; i<clientData->commandsName.size(); ++i){
         ui->tableWidget->setItem(i, 0, new QTableWidgetItem(clientData->commandsName.at(i)));
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(clientData->askCommands.at(i)));
         ui->tableWidget->setItem(i, 2, new QTableWidgetItem(clientData->ackCommands.at(i)));
     }
-<<<<<<< HEAD
     model->blockSignals(false);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     ui->tableWidget_parameters->clearContents();
     ui->tableWidget_parameters->setRowCount(0);
@@ -362,70 +339,10 @@ void ClientWindow::load()
     mTempParams = clientData->params;
 }
 
-<<<<<<< HEAD
 void ClientWindow::on_pushButton_connect_clicked()
 {
     //qintptr storedPtr = this->property("UserRoleData").value<qintptr>();
     this->updateData();
-=======
-void ClientWindow::on_refreshPara_clicked()
-{
-    //先读取界面当前参数
-    ClientData *clientData = mClientData;
-    clientData->params.clear();
-    for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
-        QString key = ui->tableWidget_parameters->item(i, 0)->text();
-        if (ui->tableWidget_parameters->cellWidget(i, 1)->inherits("QLineEdit")){
-            QString value = qobject_cast<QLineEdit*>(ui->tableWidget_parameters->cellWidget(i, 1))->text();
-            clientData->params[key] = value;
-        }
-    }
-
-    //参数写入到插件中
-    PluginManager *pluginManager = PluginManager::instance();
-    IPlugin* plugin = pluginManager->getPlugin(mClientData->pluginName);
-    if (plugin){
-        plugin->invoke("writeParameters", mClientData->params);
-    }
-}
-
-void ClientWindow::on_pushButton_connect_clicked()
-{
-    //qintptr storedPtr = this->property("UserRoleData").value<qintptr>();
-    ClientData *clientData = mClientData;//reinterpret_cast<ClientData*>(storedPtr);
-    clientData->remoteIp = ui->comboBox_ip->currentText();
-    clientData->remotePort = ui->spinBox_remotePort->value();
-    clientData->loacalPort = ui->spinBox_localPort->value();
-    clientData->pluginName = ui->comboBox_pluginName->currentText();
-    clientData->startCommand = ui->lineEdit_startCommand->text();
-    clientData->stopCommand = ui->lineEdit_stopCommand->text();
-    clientData->externTriggerCommand = ui->lineEdit_externTriggerCommand->text();
-    clientData->bindSocket = ui->checkBox_bindSocket->isChecked();
-
-    clientData->commandsName.clear();
-    clientData->askCommands.clear();
-    clientData->ackCommands.clear();
-    for (int i=0; i<ui->tableWidget->rowCount(); ++i){
-        QString text0 = ui->tableWidget->item(i, 0)->text();
-        QString text1 = ui->tableWidget->item(i, 1)->text();
-        QString text2 = ui->tableWidget->item(i, 2)->text();
-        clientData->commandsName << text0.trimmed();
-        clientData->askCommands << text1.trimmed();
-        clientData->ackCommands << text2.trimmed();
-    }
-
-    clientData->enableLoopback = ui->checkBox_loopback->isChecked();
-    clientData->params.clear();
-    for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
-        QString key = ui->tableWidget_parameters->item(i, 0)->text();
-        if (ui->tableWidget_parameters->cellWidget(i, 1)->inherits("QLineEdit")){
-            QString value = qobject_cast<QLineEdit*>(ui->tableWidget_parameters->cellWidget(i, 1))->text();
-            clientData->params[key] = value;
-        }
-    }
-
-    clientData->save();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     if (mTcpClient->state() == QAbstractSocket::ConnectedState){
         mTcpClient->disconnectFromHost();
@@ -443,10 +360,7 @@ void ClientWindow::on_pushButton_connect_clicked()
     if (mTcpClient->state() == QAbstractSocket::ConnectedState){
         ui->pushButton_connect->setEnabled(false);
         ui->pushButton_disconnect->setEnabled(true);
-<<<<<<< HEAD
         ui->pushButton_update->setEnabled(true);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     }
     else {
         QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
@@ -469,10 +383,7 @@ void ClientWindow::on_pushButton_disconnect_clicked()
 
     ui->pushButton_connect->setEnabled(true);
     ui->pushButton_disconnect->setEnabled(false);
-<<<<<<< HEAD
     ui->pushButton_update->setEnabled(false);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     emit reportSocketClosed();
 }
 
@@ -484,10 +395,7 @@ void ClientWindow::error(QAbstractSocket::SocketError error)
 
         ui->pushButton_connect->setEnabled(true);
         ui->pushButton_disconnect->setEnabled(false);
-<<<<<<< HEAD
         ui->pushButton_update->setEnabled(false);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
         mTcpClient->close();
         this->stopTransfer();
         emit reportSocketError(error);
@@ -501,10 +409,7 @@ void ClientWindow::connected()
 
     ui->pushButton_connect->setEnabled(false);
     ui->pushButton_disconnect->setEnabled(true);
-<<<<<<< HEAD
     ui->pushButton_update->setEnabled(true);
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     emit reportSocketConnected();
 }
 
@@ -608,23 +513,12 @@ void ClientWindow::replySendLog(QByteArray& command, bool isException/* = false*
 
 void ClientWindow::startTransfer()
 {
-<<<<<<< HEAD
     if (mCurrentPlugin){
         mElapsedTimer.restart();
         mTimer->start(50);
 
         mCurrentPlugin->invoke("writeParameters", mClientData->params);
         connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
-=======
-    PluginManager *pluginManager = PluginManager::instance();
-    IPlugin* plugin = pluginManager->getPlugin(mClientData->pluginName);
-    if (plugin){
-        mElapsedTimer.restart();
-        mTimer->start(500);
-
-        plugin->invoke("writeParameters", mClientData->params);
-        connect(plugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             if (event == "waveform" || event == "spectrum"){
                 QByteArray waveformBytes = data["data"].toByteArray();
                 QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
@@ -636,17 +530,10 @@ void ClientWindow::startTransfer()
             else if (event == "fileInfo"){
                 quint32 fileSize = data["fileSize"].toUInt();
                 quint64 totalpacketsNum = data["totalPackets"].toULongLong();
-<<<<<<< HEAD
                 QMetaObject::invokeMethod(this, "reportFileInfo", Qt::DirectConnection, Q_ARG(quint32&, fileSize), Q_ARG(quint64&, totalpacketsNum));
             }
         });
         mCurrentPlugin->initialize();
-=======
-                replyfileInfo(fileSize,totalpacketsNum);
-            }
-        });
-        plugin->initialize();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     }
 }
 
@@ -656,17 +543,9 @@ void ClientWindow::stopTransfer()
         return;
 
     mTimer->stop();
-<<<<<<< HEAD
     if (mCurrentPlugin){
         disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
         mCurrentPlugin->shutdown();
-=======
-    PluginManager *pluginManager = PluginManager::instance();
-    IPlugin* plugin = pluginManager->getPlugin(mClientData->pluginName);
-    if (plugin){
-        disconnect(plugin, &IPlugin::notifyEvent, this, nullptr);
-        plugin->shutdown();
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     }
 }
 
@@ -689,11 +568,7 @@ void ClientWindow::replyNumberOfPackets(quint64& numberOfPackets)
     ui->lcdNumber_numberOfPackets->display(QString::number(numberOfPackets));
 }
 
-<<<<<<< HEAD
 void ClientWindow::replyFileInfo(quint32& fileSize, quint64& totalPackets)
-=======
-void ClientWindow::replyfileInfo(quint32& fileSize, quint64& totalPackets)
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 {
     updateTableCell(3, QString::number(totalPackets));
     updateTableCell(4, QString::number(fileSize));
@@ -765,7 +640,6 @@ void ClientWindow::writeLog(QString& log)
     ui->textEdit->append(QString("%1 %2").arg(QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]"), QString(command.toHex(' ').toUpper())));
 #endif
 }
-<<<<<<< HEAD
 
 void ClientWindow::on_pushButton_update_clicked()
 {
@@ -812,5 +686,3 @@ void ClientWindow::updateData()
 
     clientData->save();
 }
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010

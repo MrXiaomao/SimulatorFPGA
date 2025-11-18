@@ -14,10 +14,7 @@ namespace Ui {
 class ServerWindow;
 }
 
-<<<<<<< HEAD
 class IPlugin;
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 class ServerData : public QObject
 {
     Q_OBJECT
@@ -30,11 +27,7 @@ public:
     QString guid; //唯一标识
     QString sessionName; //名称
     QString localIp;//远程地址
-<<<<<<< HEAD
     quint32 loacalPort = 8000;//本地端口
-=======
-    quint32 loacalPort;//本地端口
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
     QString startCommand;//开始测量
     QString stopCommand;//停止测量
@@ -153,10 +146,7 @@ public:
     Q_SLOT void replyNumberOfPackets(quint64&);
 
     Q_SLOT void load();
-<<<<<<< HEAD
     Q_SLOT void updateData();
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
     Q_SLOT void writeLog(QString&);
 
 private slots:
@@ -166,11 +156,8 @@ private slots:
 
     void on_toolButton_send_clicked();
 
-<<<<<<< HEAD
     void on_pushButton_update_clicked();
 
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 private:
     Ui::ServerWindow *ui;
     ServerData* mServerData = nullptr;
@@ -179,11 +166,8 @@ private:
     QVariantMap mTempParams; //临时保存参数列表
     QTimer* mTimer = nullptr;
     QElapsedTimer mElapsedTimer;
-<<<<<<< HEAD
     IPlugin* mCurrentPlugin = nullptr;
     QMap<QString, IPlugin*> mPlugins;
-=======
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 };
 
 #endif // SERVERWINDOW_H

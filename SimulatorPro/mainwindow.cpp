@@ -199,15 +199,9 @@ void CentralWindow::initUi()
                 menu->addAction(ui->action_paste);
 
                 if (mCloneClientData == nullptr)
-<<<<<<< HEAD
                     ui->action_paste->setEnabled(false);
                 else
                     ui->action_paste->setEnabled(true);
-=======
-                {
-                    ui->action_paste->setEnabled(false);
-                }
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             }
             else if (nodeType == TreeNodeType::nodeServer){
                 menu->addAction(ui->action_open);
@@ -218,15 +212,9 @@ void CentralWindow::initUi()
                 menu->addAction(ui->action_paste);
 
                 if (mCloneServerData == nullptr)
-<<<<<<< HEAD
                     ui->action_paste->setEnabled(false);
                 else
                     ui->action_paste->setEnabled(true);
-=======
-                {
-                    ui->action_paste->setEnabled(false);
-                }
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
             }
 
             menu->exec(QCursor::pos());

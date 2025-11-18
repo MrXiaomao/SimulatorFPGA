@@ -1,10 +1,6 @@
 #include <windows.h>
 
-<<<<<<< HEAD
 IDI_ICON1	ICON	DISCARDABLE	"D:\\Examples\\Qt\\MicroDetector\\3rdParty\\resource\\logo.ico"
-=======
-IDI_ICON1	ICON	DISCARDABLE	"C:\\Users\\DELL\\Desktop\\QT_Study\\MicroDetector\\3rdParty\\resource\\logo.ico"
->>>>>>> 3491862ae1401aa40408842f803a57ce5ac45010
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0

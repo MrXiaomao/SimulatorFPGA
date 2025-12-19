@@ -1,4 +1,4 @@
-#include "clientwindow.h"
+﻿#include "clientwindow.h"
 #include "ui_clientwindow.h"
 #include <QHostInfo>
 #include <QNetworkSession>
@@ -58,44 +58,6 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
 
     connect(this, &ClientWindow::reportRecvLog, this, &ClientWindow::replyRecvLog);
     connect(this, &ClientWindow::reportSendLog, this, &ClientWindow::replySendLog);
-
-    mTcpClient = new QTcpSocket(this);
-    //数据到达
-    connect(mTcpClient, SIGNAL(readyRead()), this, SLOT(readyRead()));
-    //网络故障
-    connect(mTcpClient, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));
-    //客户端连接
-    connect(mTcpClient, SIGNAL(connected()), this, SLOT(connected()));
-
-    //更改系统默认超时时长，让网络连接返回能够快点
-    /*QNetworkConfigurationManager manager;
-    QNetworkConfiguration config = manager.defaultConfiguration();
-    QList<QNetworkConfiguration> cfg_list = manager.allConfigurations();
-    if (cfg_list.size() > 0)
-    {
-        cfg_list.first().setConnectTimeout(1000);
-        config = cfg_list.first();
-    }
-    QSharedPointer<QNetworkSession> spNetworkSession(new QNetworkSession(config));
-    mTcpClient->setProperty("_q_networksession", QVariant::fromValue(spNetworkSession));
-    */
-// 根据 Qt 版本选择不同的实现
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    // 旧版本 Qt 使用 QNetworkConfigurationManager
-    QNetworkConfigurationManager manager;
-    QNetworkConfiguration config = manager.defaultConfiguration();
-    QList<QNetworkConfiguration> cfg_list = manager.allConfigurations();
-    if (cfg_list.size() > 0)
-    {
-        cfg_list.first().setConnectTimeout(1000);
-        config = cfg_list.first();
-    }
-    QSharedPointer<QNetworkSession> spNetworkSession(new QNetworkSession(config));
-    mTcpClient->setProperty("_q_networksession", QVariant::fromValue(spNetworkSession));
-#else
-    // 新版本 Qt 使用其他方式设置超时
-    mTcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-#endif
 
     connect(ui->toolButton_add, &QToolButton::clicked, this, [=](){
         int row = ui->tableWidget->rowCount();
@@ -344,12 +306,16 @@ void ClientWindow::on_pushButton_connect_clicked()
     //qintptr storedPtr = this->property("UserRoleData").value<qintptr>();
     this->updateData();
 
-    if (mTcpClient->state() == QAbstractSocket::ConnectedState){
-        mTcpClient->disconnectFromHost();
-        mTcpClient->waitForDisconnected();
+    reallocSocket();
+    if (mTcpClient == nullptr)
+        return;
+
+    if (ui->checkBox_bindSocket->isChecked()){
+        if (!mTcpClient->bind(ui->spinBox_localPort->value(), QAbstractSocket::ShareAddress)){
+            QString log = QString("端口绑定失败，原因：") + mTcpClient->errorString();
+            writeLog(log);
+        }
     }
-    if (ui->checkBox_bindSocket->isChecked())
-        mTcpClient->bind(ui->spinBox_localPort->value());
 
     ui->lcdNumber_numberOfPackets->display("0");
     QString log = QString("Connecting to server...");
@@ -363,10 +329,16 @@ void ClientWindow::on_pushButton_connect_clicked()
         ui->pushButton_update->setEnabled(true);
     }
     else {
-        QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
-        writeLog(log);
+        if (mTcpClient->error() == QAbstractSocket::AddressInUseError)
+        {
+            QString log = QString("连接服务器失败，原因：") + mTcpClient->errorString();
+            writeLog(log);
+        }
+        else{
+            QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
+            writeLog(log);
+        }
     }
-
 }
 
 
@@ -374,10 +346,7 @@ void ClientWindow::on_pushButton_disconnect_clicked()
 {
     stopTransfer();
 
-    mTcpClient->disconnectFromHost();
-    if (mTcpClient->state() == QAbstractSocket::ConnectedState)
-        mTcpClient->waitForDisconnected();
-
+    freeSocket();
     QString log = QString("Server disconnected");
     writeLog(log);
 
@@ -418,20 +387,44 @@ void ClientWindow::readyRead()
 {
     //读取新的数据
     QByteArray rawData = mTcpClient->readAll();
-    QString command = rawData.toHex(' ');
+    QString command = rawData.toHex(' ').toUpper();
+    //QString command = "12 34 00 0F FC 10 00 00 00 03 AB CD 12 34 00 0F FD 10 00 00 03 E8 AB CD 12 34 00 0F FE 12 00 00 00 00 AB CD 12 34 00 0F F9 11 00 00 00 00 AB CD 12 34 00 0F FF 10 00 00 00 01 AB CD 12 34 00 0F EA 10 00 00 00 01 AB CD";
 
     emit reportRecvLog(rawData);
-    for (int i=0; i<mClientData->askCommands.size(); ++i){
-        if (mClientData->askCommands[i].trimmed().toUpper() == command.toUpper()){
-            QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
-            if (!sendCommand.isEmpty()){
-                mTcpClient->write(sendCommand);
+    bool exists = false;
+    while (command.length() > 0)
+    {
+        exists = false;
+        for (int i=0; i<mClientData->askCommands.size(); ++i){
+            if (command.startsWith(mClientData->askCommands[i].trimmed())){
+                QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
+                if (!sendCommand.isEmpty()){
+                    mTcpClient->write(sendCommand);
 
-                emit reportSendLog(sendCommand);
+                    emit reportSendLog(sendCommand);
+                }
+
+                command = command.remove(0, mClientData->askCommands[i].trimmed().length()).trimmed();
+                exists = true;
+                break;
             }
-            return;
         }
+
+        if (!exists)
+            break;
     }
+
+    //  for (int i=0; i<mClientData->askCommands.size(); ++i){
+    //     if (mClientData->askCommands[i].trimmed().toUpper() == command.toUpper()){
+    //         QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
+    //         if (!sendCommand.isEmpty()){
+    //             mTcpClient->write(sendCommand);
+
+    //             emit reportSendLog(sendCommand);
+    //         }
+    //         return;
+    //     }
+    // }
 
     if (command.toUpper() == mClientData->startCommand.trimmed().toUpper()){
         QByteArray sendCommand = QByteArray::fromHex(mClientData->startCommand.toLocal8Bit());
@@ -551,6 +544,9 @@ void ClientWindow::stopTransfer()
 
 void ClientWindow::replyTransferData(QByteArray& data)
 {
+    if (mTcpClient == nullptr)
+        return;
+
     if (mTcpClient->state() == QAbstractSocket::ConnectedState){
         mTcpClient->write(data);
         mTcpClient->waitForBytesWritten(100);
@@ -565,11 +561,17 @@ void ClientWindow::replyTransferData(QByteArray& data)
 
 void ClientWindow::replyNumberOfPackets(quint64& numberOfPackets)
 {
+    if (mTcpClient == nullptr)
+        return;
+
     ui->lcdNumber_numberOfPackets->display(QString::number(numberOfPackets));
 }
 
 void ClientWindow::replyFileInfo(quint32& fileSize, quint64& totalPackets)
 {
+    if (mTcpClient == nullptr)
+        return;
+
     updateTableCell(3, QString::number(totalPackets));
     updateTableCell(4, QString::number(fileSize));
 }
@@ -685,4 +687,55 @@ void ClientWindow::updateData()
     }
 
     clientData->save();
+}
+
+#include <QNetworkProxyFactory>
+void ClientWindow::reallocSocket()
+{
+    if (mTcpClient)
+        return;
+
+    mTcpClient = new QTcpSocket(this);
+    QNetworkProxyFactory::setUseSystemConfiguration(false);
+    mTcpClient->setProxy(QNetworkProxy::NoProxy);
+    mTcpClient->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+
+    //数据到达
+    connect(mTcpClient, SIGNAL(readyRead()), this, SLOT(readyRead()));
+    //网络故障
+    connect(mTcpClient, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));
+    //客户端连接
+    connect(mTcpClient, SIGNAL(connected()), this, SLOT(connected()));
+
+// 根据 Qt 版本选择不同的实现
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    // 旧版本 Qt 使用 QNetworkConfigurationManager
+    QNetworkConfigurationManager manager;
+    QNetworkConfiguration config = manager.defaultConfiguration();
+    QList<QNetworkConfiguration> cfg_list = manager.allConfigurations();
+    if (cfg_list.size() > 0)
+    {
+        cfg_list.first().setConnectTimeout(1000);
+        config = cfg_list.first();
+    }
+    QSharedPointer<QNetworkSession> spNetworkSession(new QNetworkSession(config));
+    mTcpClient->setProperty("_q_networksession", QVariant::fromValue(spNetworkSession));
+#else
+    // 新版本 Qt 使用其他方式设置超时
+    mTcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+#endif
+}
+void ClientWindow::freeSocket()
+{
+    if (mTcpClient == nullptr)
+        return;
+
+    if (mTcpClient->isOpen()){
+        mTcpClient->close();
+        mTcpClient->abort();// disconnectFromHost();
+        mTcpClient->waitForDisconnected();
+    }
+
+    mTcpClient->deleteLater();
+    mTcpClient = nullptr;
 }

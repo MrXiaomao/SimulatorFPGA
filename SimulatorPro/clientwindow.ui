@@ -102,6 +102,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>启动绑定功能，在断开网络连接之后，需间隔30秒才能再次启用！</string>
+           </property>
            <property name="text">
             <string>绑定</string>
            </property>

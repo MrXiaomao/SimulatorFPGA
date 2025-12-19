@@ -1,4 +1,4 @@
-#include "serverwindow.h"
+﻿#include "serverwindow.h"
 #include "ui_serverwindow.h"
 #include <QHostInfo>
 #include <QNetworkInterface>
@@ -267,6 +267,9 @@ void ServerWindow::on_pushButton_start_clicked()
         ui->pushButton_stop->setEnabled(true);
         emit reportSocketStarted();
     }
+    else{
+        writeLog(QString("服务开启失败，请确定端口号%1是否被占用！").arg(ui->spinBox_localPort->value()));
+    }
 }
 
 
@@ -455,7 +458,7 @@ void ServerWindow::on_toolButton_send_clicked()
     }
 }
 
-void ServerWindow::writeLog(QString& log)
+void ServerWindow::writeLog(const QString& log)
 {
     QString strDateTime = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     strDateTime += QString("# %1").arg(log);
@@ -505,7 +508,11 @@ void ServerWindow::updateData()
     serverData->enableLoopback = ui->checkBox_loopback->isChecked();
     serverData->params.clear();
     for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
-        serverData->params[ui->tableWidget_parameters->item(i, 0)->text()] = ui->tableWidget_parameters->item(i, 1)->text();
+        QString key = ui->tableWidget_parameters->item(i, 0)->text();
+        if (ui->tableWidget_parameters->cellWidget(i, 1)->inherits("QLineEdit")){
+            QString value = qobject_cast<QLineEdit*>(ui->tableWidget_parameters->cellWidget(i, 1))->text();
+            serverData->params[key] = value;
+        }
     }
 
     serverData->save();

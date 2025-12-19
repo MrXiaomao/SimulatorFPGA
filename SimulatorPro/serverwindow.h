@@ -1,4 +1,4 @@
-#ifndef SERVERWINDOW_H
+﻿#ifndef SERVERWINDOW_H
 #define SERVERWINDOW_H
 
 #include <QWidget>
@@ -147,7 +147,7 @@ public:
 
     Q_SLOT void load();
     Q_SLOT void updateData();
-    Q_SLOT void writeLog(QString&);
+    Q_SLOT void writeLog(const QString&);
 
 private slots:
     void on_pushButton_start_clicked();

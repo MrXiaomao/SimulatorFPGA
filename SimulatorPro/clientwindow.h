@@ -177,6 +177,9 @@ private:
     QElapsedTimer mElapsedTimer;
     IPlugin* mCurrentPlugin = nullptr;
     QMap<QString, IPlugin*> mPlugins;
+
+    void reallocSocket();
+    void freeSocket();
 };
 
 #endif // CLIENTWINDOW_H

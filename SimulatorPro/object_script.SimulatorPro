@@ -6,6 +6,7 @@ temp/obj/mainwindow.o
 temp/obj/serverwindow.o
 temp/obj/pluginmanager.o
 temp/obj/pluginregistry.o
+temp/obj/qcustomfile.o
 temp/obj/qgenericfile.o
 temp/obj/appender.o
 temp/obj/appenderskeleton.o
@@ -124,6 +125,7 @@ temp/obj/moc_iplugin.o
 temp/obj/moc_ipluginfactory.o
 temp/obj/moc_pluginmanager.o
 temp/obj/moc_pluginregistry.o
+temp/obj/moc_qcustomfile.o
 temp/obj/moc_qgenericfile.o
 temp/obj/moc_lightstyle.o
 temp/obj/moc_darkstyle.o

@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "createsessionwindow.h"
 #include "clientwindow.h"
@@ -338,14 +338,7 @@ void CentralWindow::initUi()
         ui->treeWidget->setCurrentItem(item);
     });
 
-    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, [=](QTreeWidgetItem *item, int /*column*/){
-        for (auto iter=mMapTabWidget.begin(); iter!=mMapTabWidget.end(); ++iter){
-            if (iter.value() == item){
-                ui->rightTabWidget->setCurrentWidget(iter.key());
-                return;
-            }
-        }
-
+    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, [=](QTreeWidgetItem *item, int /*column*/){        
         openSession(item);
     });
 
@@ -503,6 +496,13 @@ void CentralWindow::on_lineEdit_textChanged(const QString &arg1)
 
 void CentralWindow::openSession(QTreeWidgetItem *item)
 {
+    for (auto iter=mMapTabWidget.begin(); iter!=mMapTabWidget.end(); ++iter){
+        if (iter.value() == item){
+            ui->rightTabWidget->setCurrentWidget(iter.key());
+            return;
+        }
+    }
+
     QString name = item->text(0);
     TreeNodeType nodeType = (TreeNodeType)item->data(0, TreeNodeRole::roleType).toUInt();
     if (TreeNodeType::nodeClient == nodeType){

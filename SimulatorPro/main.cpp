@@ -1,4 +1,4 @@
-#pragma GCC diagnostic push
+﻿#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #pragma GCC diagnostic pop
 #include "mainwindow.h"
@@ -22,16 +22,22 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication::setAttribute(Qt::AA_DisableHighDpiScaling); // 禁用高DPI缩放支持
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps); // 使用高DPI位图
+    QGoodWindow::setup();
+    QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
+    QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
+    QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
     QApplication a(argc, argv);
-    QApplication::setApplicationName("Fpga仿真模拟器");
+    QApplication::setApplicationName("Fpga模拟器");//Fpga仿真模拟器
     QApplication::setOrganizationName("Copyright (c) 2025");
     QApplication::setOrganizationDomain("");
     QApplication::setApplicationVersion("2.0.1.0");
     QApplication::setStyle(QStyleFactory::create("fusion"));//WindowsVista fusion windows
+
+    QTimer *pTimer = new QTimer();
+    pTimer->setTimerType(Qt::PreciseTimer);		//设置成高精度
+    pTimer->start(1000);						//超时时间是多少无所谓。
 
     GlobalSettings settings;
     if(settings.value("Global/Options/enableNativeUI",false).toBool()) {
@@ -40,16 +46,27 @@ int main(int argc, char *argv[])
         QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings,false);
     }
 
-    QString fontFamily = settings.value("Global/Options/fontFamily", "微软雅黑").toString();
+    QFont font = QApplication::font();
+#if defined(Q_OS_WIN) && defined(Q_CC_MSVC)
+    int fontId = QFontDatabase::addApplicationFont(QApplication::applicationDirPath() + "/inziu-iosevkaCC-SC-regular.ttf");
+#else
+    int fontId = QFontDatabase::addApplicationFont(QStringLiteral(":/font/font/inziu-iosevkaCC-SC-regular.ttf"));
+#endif
+    QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+    if (fontFamilies.size() > 0) {
+        font.setFamily(fontFamilies[0]);
+    }
+    font.setFixedPitch(true);
+    // QString fontFamily = settings.value("Global/Options/fontFamily", "微软雅黑").toString();
     quint32 fontPointSize = settings.value("Global/Options/fontPointSize", 12).toInt();
-    QFont font = qApp->font();
-    font.setStyleStrategy(QFont::PreferAntialias);
-    font.setHintingPreference(QFont::PreferFullHinting);
-    font.setFamily(fontFamily);
+    // QFont font = qApp->font();
+    // font.setStyleStrategy(QFont::PreferAntialias);
+    // font.setHintingPreference(QFont::PreferFullHinting);
+    // font.setFamily(fontFamily);
     font.setPointSize(fontPointSize);
     qApp->setFont(font);
     qApp->setStyle(new DarkStyle());
-    qApp->style()->setObjectName("fusion");
+    //qApp->style()->setObjectName("fusion");
 
     settings.beginGroup("Version");
     settings.setValue("Version",GIT_VERSION);

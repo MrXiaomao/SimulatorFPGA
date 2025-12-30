@@ -181,6 +181,21 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
         }
 
         if (mCurrentPlugin){
+            disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
+            connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
+                if (event == "waveform" || event == "spectrum"){
+                    QByteArray waveformBytes = data["data"].toByteArray();
+                    quint64 numberOfPackets = data["numberOfPackets"].toULongLong();
+                    QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
+                    QMetaObject::invokeMethod(this, "reportNumberOfPackets", Qt::DirectConnection, Q_ARG(quint64&, numberOfPackets));
+                }
+                else if (event == "fileInfo"){
+                    quint32 fileSize = data["fileSize"].toUInt();
+                    quint64 totalpacketsNum = data["totalPackets"].toULongLong();
+                    QMetaObject::invokeMethod(this, "reportFileInfo", Qt::DirectConnection, Q_ARG(quint32&, fileSize), Q_ARG(quint64&, totalpacketsNum));
+                }
+            });
+
             QVariantMap parameter = mCurrentPlugin->invoke("readParameters").toMap();
             ui->tableWidget_parameters->clearContents();
             ui->tableWidget_parameters->setRowCount(0);
@@ -511,21 +526,6 @@ void ClientWindow::startTransfer()
         mTimer->start(50);
 
         mCurrentPlugin->invoke("writeParameters", mClientData->params);
-        connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
-            if (event == "waveform" || event == "spectrum"){
-                QByteArray waveformBytes = data["data"].toByteArray();
-                QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
-            }
-            else if (event == "numberOfPackets"){
-                quint64 numberOfPackets = data["data"].toULongLong();
-                QMetaObject::invokeMethod(this, "reportNumberOfPackets", Qt::DirectConnection, Q_ARG(quint64&, numberOfPackets));
-            }
-            else if (event == "fileInfo"){
-                quint32 fileSize = data["fileSize"].toUInt();
-                quint64 totalpacketsNum = data["totalPackets"].toULongLong();
-                QMetaObject::invokeMethod(this, "reportFileInfo", Qt::DirectConnection, Q_ARG(quint32&, fileSize), Q_ARG(quint64&, totalpacketsNum));
-            }
-        });
         mCurrentPlugin->initialize();
     }
 }
@@ -537,7 +537,7 @@ void ClientWindow::stopTransfer()
 
     mTimer->stop();
     if (mCurrentPlugin){
-        disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
+        //disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
         mCurrentPlugin->shutdown();
     }
 }
@@ -548,8 +548,10 @@ void ClientWindow::replyTransferData(QByteArray& data)
         return;
 
     if (mTcpClient->state() == QAbstractSocket::ConnectedState){
-        mTcpClient->write(data);
-        mTcpClient->waitForBytesWritten(100);
+        if (mTcpClient->isWritable()){
+            mTcpClient->write(data);
+            mTcpClient->waitForBytesWritten();
+        }
     }
     else if (mTcpClient->state() == QAbstractSocket::UnconnectedState){
         //网络已经断开了
@@ -739,3 +741,17 @@ void ClientWindow::freeSocket()
     mTcpClient->deleteLater();
     mTcpClient = nullptr;
 }
+
+void ClientWindow::on_pushButton_preProcess_clicked()
+{
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    this->updateData();
+
+    if (mCurrentPlugin)
+    {
+        mCurrentPlugin->invoke("preProcess", mClientData->params);
+    }
+
+    QApplication::restoreOverrideCursor();
+}
+

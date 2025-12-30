@@ -1,4 +1,4 @@
-#ifndef ZRSPECTRUMPLUGIN_H
+﻿#ifndef ZRSPECTRUMPLUGIN_H
 #define ZRSPECTRUMPLUGIN_H
 
 #include <QObject>
@@ -77,6 +77,9 @@ public:
     QVariant invoke(const QString& method, const QVariantMap& params = QVariantMap()) override;
 
 private:
+    // 预处理
+    QVariant preProcess();
+
     QVector<QByteArray> OldData2NewData(const QByteArray& data);
     // 转码
     QByteArray encode(const QByteArray &data, const QByteArray &from1, const QByteArray &to1, const QByteArray &from2, const QByteArray &to2);

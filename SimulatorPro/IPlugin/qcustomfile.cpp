@@ -1,4 +1,4 @@
-#include "qcustomfile.h"
+﻿#include "qcustomfile.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QRandomGenerator>
@@ -82,18 +82,9 @@ bool QCustomFilePlugin::initialize() {
                     QVariantMap data;
                     data["timestamp"] = QDateTime::currentDateTime().toString();
                     data["data"] = packetBytes;
-
+                    data["numberOfPackets"] = numberOfPackets++;
                     //emit notifyEvent("waveform", data);
                     QString event = "waveform";
-                    QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
-                }
-
-                {
-                    QVariantMap data;
-                    data["timestamp"] = QDateTime::currentDateTime().toString();
-                    data["data"] = numberOfPackets++;
-
-                    QString event = "numberOfPackets";
                     QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
                 }
 

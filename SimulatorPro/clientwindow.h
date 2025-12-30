@@ -1,4 +1,4 @@
-#ifndef CLIENTWINDOW_H
+﻿#ifndef CLIENTWINDOW_H
 #define CLIENTWINDOW_H
 
 #include <QWidget>
@@ -167,6 +167,8 @@ private slots:
     void on_toolButton_send_clicked();
 
     void on_pushButton_update_clicked();
+
+    void on_pushButton_preProcess_clicked();
 
 private:
     Ui::ClientWindow *ui;

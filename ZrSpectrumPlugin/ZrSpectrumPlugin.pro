@@ -46,3 +46,7 @@ contains(QT_ARCH, x86_64) {
 
 DESTDIR = $$DESTDIR/qt$$QT_VERSION/QtPlugins/simulator
 message(DESTDIR = $$DESTDIR)
+
+win32{
+    LIBS += -lwinmm
+}

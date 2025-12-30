@@ -1,4 +1,4 @@
-#include "zrspectrumplugin.h"
+﻿#include "zrspectrumplugin.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QRandomGenerator>
@@ -53,16 +53,8 @@ bool ZrSpectrumPlugin::initialize() {
 
     mTimerThread = new QLiteThread();
     mTimerThread->setWorkThreadProc([=](){
-        qRegisterMetaType<QVariantMap>("QVariantMap&");
-        qRegisterMetaType<QByteArray>("QByteArray&");
-
-        updateFileInfo(); // 更新文件信息
-
-        QString event = "fileInfo";
-        QVariantMap data;
-        data["fileSize"] = m_fileSize;
-        data["totalPackets"] = totalPackets;
-        QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
+        qRegisterMetaType<QVariantMap>("QVariantMap");
+        qRegisterMetaType<QByteArray>("QByteArray");
 
         QFile binaryFile(binaryFilePath);
         if (!binaryFile.open(QIODevice::ReadOnly)) {
@@ -89,12 +81,18 @@ bool ZrSpectrumPlugin::initialize() {
         sendPackets = 0;
 
         QElapsedTimer elapsedTimer;
+        QByteArray specttrumBytes;
+        specttrumBytes.reserve(32*1060);//32个数据包，每个数据包1060字节
+        elapsedTimer.start();
+        qint32 nextTime = mSampleFrequency;
 
-        while (!mTimerThread->isInterruptionRequested() && currentPos < fileSize - 1)
+        while (1)
         {
-            elapsedTimer.restart();
-            QByteArray specttrumBytes;
-            specttrumBytes.reserve(32*1060);//32个数据包，每个数据包1060字节
+            QDateTime tmStart = QDateTime::currentDateTime();
+            if (mTimerThread->isInterruptionRequested() || currentPos >= fileSize - 1)
+                break;
+
+            specttrumBytes.clear();
 
             // 查找下一个0x55包头
             uchar* startPos = fileData + currentPos;
@@ -147,29 +145,32 @@ bool ZrSpectrumPlugin::initialize() {
             // 更新位置
             currentPos += packetSize;
 
+            while (elapsedTimer.elapsed() < nextTime) {
+                QThread::msleep(1u);
+            }
+
+            nextTime += mSampleFrequency;
             {
+                qDebug() << "notifyEvent spectrum :" << sendPackets;
+
                 QVariantMap data;
                 data["timestamp"] = QDateTime::currentDateTime().toString();
                 data["data"] = specttrumBytes;
+                data["numberOfPackets"] = sendPackets;
 
                 QString event = "spectrum";
                 QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
             }
 
-            {
-                QVariantMap data;
-                data["timestamp"] = QDateTime::currentDateTime().toString();
-                data["data"] = sendPackets;
-
-                QString event = "numberOfPackets";
-                QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
-            }
-
             if (!mCycleTransfer)
-                break;
+                break;                        
 
-            qint64 sleepTime = mSampleFrequency - elapsedTimer.elapsed();
-            QThread::msleep(sleepTime < 0 ? 0 : sleepTime);
+            // QDateTime tmStop = QDateTime::currentDateTime();
+            // //记录生成数据以及发送数据的运算时间，确保发出的计数率与电脑时间匹配。
+            // int calculateTime = tmStart.msecsTo(tmStop);
+            // if(mSampleFrequency - calculateTime > 10){
+            //     QThread::msleep(mSampleFrequency - calculateTime - 9);
+            // }
         }
 
 		// 清理资源
@@ -523,6 +524,11 @@ QVariant ZrSpectrumPlugin::invoke(const QString& method, const QVariantMap& para
     } else if (method == "writeParameters") {
         return writeParameters(params);
     }
+    else if (method == "preProcess") {
+        //预处理
+        binaryFilePath = params.value("[3]锆活化测试数据路径").toString();
+        return preProcess();
+    }
 
     return QVariant(); // 未知方法返回空
 }
@@ -567,5 +573,21 @@ QVariant ZrSpectrumPlugin::writeParameters(const QVariantMap& params){
     QVariantMap result;
     result["success"] = true;
     result["message"] = "ZrSpectrumPlugin parameters written successfully";
+    return result;
+}
+
+QVariant ZrSpectrumPlugin::preProcess()
+{
+    updateFileInfo(); // 更新文件信息
+
+    QString event = "fileInfo";
+    QVariantMap data;
+    data["fileSize"] = m_fileSize;
+    data["totalPackets"] = totalPackets;
+    QMetaObject::invokeMethod(this, "notifyEvent", Qt::QueuedConnection, Q_ARG(QString, event), Q_ARG(QVariantMap, data));
+
+    QVariantMap result;
+    result["success"] = true;
+    result["message"] = "ZrSpectrumPlugin preProcess is completed";
     return result;
 }

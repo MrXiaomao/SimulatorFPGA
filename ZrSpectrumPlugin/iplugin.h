@@ -1,4 +1,4 @@
-#ifndef IPLUGIN_H
+﻿#ifndef IPLUGIN_H
 #define IPLUGIN_H
 #include <QObject>
 #include <QString>

@@ -151,8 +151,6 @@ bool ZrSpectrumPlugin::initialize() {
 
             nextTime += mSampleFrequency;
             {
-                qDebug() << "notifyEvent spectrum :" << sendPackets;
-
                 QVariantMap data;
                 data["timestamp"] = QDateTime::currentDateTime().toString();
                 data["data"] = specttrumBytes;
@@ -163,14 +161,7 @@ bool ZrSpectrumPlugin::initialize() {
             }
 
             if (!mCycleTransfer)
-                break;                        
-
-            // QDateTime tmStop = QDateTime::currentDateTime();
-            // //记录生成数据以及发送数据的运算时间，确保发出的计数率与电脑时间匹配。
-            // int calculateTime = tmStart.msecsTo(tmStop);
-            // if(mSampleFrequency - calculateTime > 10){
-            //     QThread::msleep(mSampleFrequency - calculateTime - 9);
-            // }
+                break;
         }
 
 		// 清理资源
@@ -211,8 +202,8 @@ QVector<QByteArray> ZrSpectrumPlugin::OldData2NewData(const QByteArray& data)
     TCPPacket tempSpecdata;
     getDataFromQByte(validData, tempSpecdata);
 
-    // 测量时间：1000ms
-    QByteArray tmpData = QByteArray::fromHex("000003E8");
+    // 测量时间：50ms
+    QByteArray tmpData = QByteArray::fromHex("00000032");
     commonData.append(tmpData);
 
     // 死时间，单位ns

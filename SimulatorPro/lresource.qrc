@@ -21,5 +21,4 @@
         <file>resource/image/paste.png</file>
         <file>resource/image/preprocess.png</file>
     </qresource>
-    <qresource prefix="/font"/>
 </RCC>

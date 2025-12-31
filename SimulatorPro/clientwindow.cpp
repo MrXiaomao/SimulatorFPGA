@@ -397,6 +397,29 @@ void ClientWindow::connected()
     emit reportSocketConnected();
 }
 
+bool ClientWindow::stringEqual(const QString &strA/*目标*/, const QString &strB/*源*/)
+{
+    // 1. 长度不同直接返回false
+    if (strA.length() < strB.length()) return false;
+
+    // 2. 逐字符比较
+    for (int i = 0; i < strB.length(); ++i) {
+        QChar a = strA.at(i);
+        QChar b = strB.at(i);
+
+        // 3. 处理通配符规则：当'b'为'x'时跳过比较
+        if (b.toLower() == 'x') {
+            continue;
+        }
+
+        // 4. 忽略大小写比较其他字符
+        if (a.toLower() != b.toLower()) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void ClientWindow::readyRead()
 {
@@ -411,17 +434,21 @@ void ClientWindow::readyRead()
     {
         exists = false;
         for (int i=0; i<mClientData->askCommands.size(); ++i){
-            if (command.startsWith(mClientData->askCommands[i].trimmed())){
-                QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
-                if (!sendCommand.isEmpty()){
-                    mTcpClient->write(sendCommand);
+            if (mClientData->askCommands[i].trimmed().length() > 0)
+            {
+                if (stringEqual(command.trimmed(), mClientData->askCommands[i].trimmed()))
+                {
+                    QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
+                    if (!sendCommand.isEmpty()){
+                        mTcpClient->write(sendCommand);
 
-                    emit reportSendLog(sendCommand);
+                        emit reportSendLog(sendCommand);
+                    }
+
+                    command = command.remove(0, mClientData->askCommands[i].trimmed().length()).trimmed();
+                    exists = true;
+                    break;
                 }
-
-                command = command.remove(0, mClientData->askCommands[i].trimmed().length()).trimmed();
-                exists = true;
-                break;
             }
         }
 
@@ -429,19 +456,8 @@ void ClientWindow::readyRead()
             break;
     }
 
-    //  for (int i=0; i<mClientData->askCommands.size(); ++i){
-    //     if (mClientData->askCommands[i].trimmed().toUpper() == command.toUpper()){
-    //         QByteArray sendCommand = QByteArray::fromHex(mClientData->ackCommands[i].toLocal8Bit());
-    //         if (!sendCommand.isEmpty()){
-    //             mTcpClient->write(sendCommand);
-
-    //             emit reportSendLog(sendCommand);
-    //         }
-    //         return;
-    //     }
-    // }
-
-    if (command.toUpper() == mClientData->startCommand.trimmed().toUpper()){
+    if (command.trimmed() == mClientData->startCommand.trimmed())
+    {
         QByteArray sendCommand = QByteArray::fromHex(mClientData->startCommand.toLocal8Bit());
         if (mClientData->enableLoopback){
             mTcpClient->write(sendCommand);
@@ -453,7 +469,8 @@ void ClientWindow::readyRead()
         return;
     }
 
-    if (command.toUpper() == mClientData->stopCommand.trimmed().toUpper()){
+    if (command.trimmed() == mClientData->stopCommand.trimmed())
+    {
         this->stopTransfer();
 
         if (mClientData->enableLoopback){
@@ -466,11 +483,11 @@ void ClientWindow::readyRead()
     }
 
     //解析失败的指令，按照原路返回去吧
-    // if (ui->checkBox_loopback->isChecked())
-    // {
-    //     mTcpClient->write(rawData);
-    //     emit reportSendLog(rawData, true);
-    // }
+    if (ui->checkBox_loopback->isChecked())
+    {
+        mTcpClient->write(rawData);
+        emit reportSendLog(rawData, true);
+    }
 }
 
 void ClientWindow::on_toolButton_send_clicked()
@@ -680,6 +697,7 @@ void ClientWindow::updateData()
 
     clientData->enableLoopback = ui->checkBox_loopback->isChecked();
     clientData->params.clear();
+
     for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
         QString key = ui->tableWidget_parameters->item(i, 0)->text();
         if (ui->tableWidget_parameters->cellWidget(i, 1)->inherits("QLineEdit")){

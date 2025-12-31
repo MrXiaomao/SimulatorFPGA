@@ -1537,11 +1537,11 @@ temp/rcc/qrc_lresource.cpp: lresource.qrc \
 		resource/image/folder_add\ .png \
 		resource/image/connect.png \
 		resource/image/disConnect.png \
+		resource/image/preprocess.png \
 		resource/image/create2.png \
 		resource/image/remove.png \
 		resource/image/folder_delete.png \
-		resource/image/stop.png \
-		../font/inziu-iosevkaCC-SC-regular.ttf
+		resource/image/stop.png
 	C:\Qt\5.15.2\mingw81_64\bin\rcc.exe -name lresource lresource.qrc -o temp\rcc\qrc_lresource.cpp
 
 compiler_moc_predefs_make_all: temp/moc/moc_predefs.h

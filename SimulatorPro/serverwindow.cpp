@@ -315,6 +315,29 @@ void ServerWindow::error(QAbstractSocket::SocketError)
     mTcpClient = nullptr;
 }
 
+bool ServerWindow::stringEqual(const QString &strA/*目标*/, const QString &strB/*源*/)
+{
+    // 1. 长度不同直接返回false
+    if (strA.length() < strB.length()) return false;
+
+    // 2. 逐字符比较
+    for (int i = 0; i < strB.length(); ++i) {
+        QChar a = strA.at(i);
+        QChar b = strB.at(i);
+
+        // 3. 处理通配符规则：当'b'为'x'时跳过比较
+        if (b.toLower() == 'x') {
+            continue;
+        }
+
+        // 4. 忽略大小写比较其他字符
+        if (a.toLower() != b.toLower()) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void ServerWindow::readyRead()
 {
@@ -324,16 +347,31 @@ void ServerWindow::readyRead()
     QString command = rawData.toHex(' ');
 
     writeRecvLog(rawData);
-    for (int i=0; i<mServerData->askCommands.size(); ++i){
-        if (mServerData->askCommands[i].trimmed().toUpper() == command.toUpper()){
-            QByteArray sendCommand = QByteArray::fromHex(mServerData->ackCommands[i].toLocal8Bit());
-            if (!sendCommand.isEmpty()){
-                tcpClient->write(sendCommand);
+    bool exists = false;
+    while (command.length() > 0)
+    {
+        exists = false;
+        for (int i=0; i<mServerData->askCommands.size(); ++i){
+            if (mServerData->askCommands[i].trimmed().length() > 0)
+            {
+                if (stringEqual(command.trimmed(), mServerData->askCommands[i].trimmed()))
+                {
+                    QByteArray sendCommand = QByteArray::fromHex(mServerData->ackCommands[i].toLocal8Bit());
+                    if (!sendCommand.isEmpty()){
+                        tcpClient->write(sendCommand);
 
-                writeSendLog(sendCommand);
+                        writeSendLog(sendCommand);
+                    }
+
+                    command = command.remove(0, mServerData->askCommands[i].trimmed().length()).trimmed();
+                    exists = true;
+                    break;
+                }
             }
-            return;
         }
+
+        if (!exists)
+            break;
     }
 
     if (command.toUpper() == mServerData->startCommand.trimmed().toUpper()){
@@ -516,5 +554,19 @@ void ServerWindow::updateData()
     }
 
     serverData->save();
+}
+
+
+void ServerWindow::on_pushButton_preProcess_clicked()
+{
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    this->updateData();
+
+    if (mCurrentPlugin)
+    {
+        mCurrentPlugin->invoke("preProcess", mServerData->params);
+    }
+
+    QApplication::restoreOverrideCursor();
 }
 

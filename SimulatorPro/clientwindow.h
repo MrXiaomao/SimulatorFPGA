@@ -182,6 +182,7 @@ private:
 
     void reallocSocket();
     void freeSocket();
+    bool stringEqual(const QString &strA/*目标*/, const QString &strB/*源*/);
 };
 
 #endif // CLIENTWINDOW_H

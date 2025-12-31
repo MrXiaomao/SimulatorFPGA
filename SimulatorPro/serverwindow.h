@@ -158,6 +158,8 @@ private slots:
 
     void on_pushButton_update_clicked();
 
+    void on_pushButton_preProcess_clicked();
+
 private:
     Ui::ServerWindow *ui;
     ServerData* mServerData = nullptr;
@@ -168,6 +170,8 @@ private:
     QElapsedTimer mElapsedTimer;
     IPlugin* mCurrentPlugin = nullptr;
     QMap<QString, IPlugin*> mPlugins;
+
+    bool stringEqual(const QString &strA/*目标*/, const QString &strB/*源*/);
 };
 
 #endif // SERVERWINDOW_H

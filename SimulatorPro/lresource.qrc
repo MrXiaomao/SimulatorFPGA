@@ -21,7 +21,7 @@
         <file>resource/image/paste.png</file>
         <file>resource/image/preprocess.png</file>
     </qresource>
-    <qresource prefix="/font">
-        <file compress-algo="best">../font/inziu-iosevkaCC-SC-regular.ttf</file>
+    <qresource prefix="/Font">
+        <file compress-algo="best">resource/Font/inziu-iosevkaCC-SC-regular.ttf</file>
     </qresource>
 </RCC>

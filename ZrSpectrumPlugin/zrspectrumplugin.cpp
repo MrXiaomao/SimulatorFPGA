@@ -211,8 +211,8 @@ QVector<QByteArray> ZrSpectrumPlugin::OldData2NewData(const QByteArray& data)
     TCPPacket tempSpecdata;
     getDataFromQByte(validData, tempSpecdata);
 
-    // 测量时间：1000ms
-    QByteArray tmpData = QByteArray::fromHex("000003E8");
+    // 测量时间：50ms
+    QByteArray tmpData = QByteArray::fromHex("00000032");
     commonData.append(tmpData);
 
     // 死时间，单位ns

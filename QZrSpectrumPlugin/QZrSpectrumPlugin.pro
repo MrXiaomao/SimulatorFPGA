@@ -1,8 +1,8 @@
 QT -= gui
+QT += concurrent
 
-TARGET = QZrSinWaveformPlugin
 TEMPLATE = lib
-DEFINES += QZRSINWAVEFORMPLUGIN_LIBRARY
+DEFINES += QZRSPECTRUMPLUGIN_LIBRARY
 
 CONFIG += c++17
 CONFIG += plugin    #告诉构建系统此库是一个插件，并且会生成相应的元数据文件，这是为了能够使用Qt的插件框架功能
@@ -12,12 +12,15 @@ CONFIG += plugin    #告诉构建系统此库是一个插件，并且会生成�
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    qzrsinwaveformplugin.cpp
+    qzrspectrumplugin.cpp
 
 HEADERS += \
     iplugin.h \
     qlitethread.h \
-    qzrsinwaveformplugin.h
+    qzrspectrumplugin.h
+
+TRANSLATIONS += \
+    QZrSpectrumPlugin_zh_CN.ts
 
 # Default rules for deployment.
 unix {
@@ -42,3 +45,7 @@ contains(QT_ARCH, x86_64) {
 
 DESTDIR = $$DESTDIR/qt$$QT_VERSION/QtPlugins/simulator
 message(DESTDIR = $$DESTDIR)
+
+win32{
+    LIBS += -lwinmm
+}

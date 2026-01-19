@@ -20,7 +20,7 @@ CXXFLAGS      = -fno-keep-inline-dllexport -Wall -Wextra -Wpedantic -Wdeprecated
 INCPATH       = -I. -IIPlugin -I-L -I..\..\3rdParty\resource -I-L -I..\..\3rdParty\log4qt\Include -I..\..\3rdParty\log4qt\Include\log4qt -I..\..\3rdParty\log4qt\Include\log4qt\helpers -I..\..\3rdParty\log4qt\Include\log4qt\spi -I..\..\3rdParty\log4qt\Include\log4qt\varia -I..\..\3rdParty\hdf5\C++\src -I..\..\3rdParty\hdf5\C++\include -I..\..\3rdParty\QGoodWindow\QGoodWindow\src\theme -I..\..\3rdParty\QGoodWindow\QGoodWindow -I..\..\3rdParty\QGoodWindow\QGoodCentralWidget -IC:\Qt\5.15.2\mingw81_64\include -IC:\Qt\5.15.2\mingw81_64\include\QtSvg -IC:\Qt\5.15.2\mingw81_64\include\QtWidgets -IC:\Qt\5.15.2\mingw81_64\include\QtWinExtras -IC:\Qt\5.15.2\mingw81_64\include\QtGui -IC:\Qt\5.15.2\mingw81_64\include\QtANGLE -IC:\Qt\5.15.2\mingw81_64\include\QtNetwork -IC:\Qt\5.15.2\mingw81_64\include\QtConcurrent -IC:\Qt\5.15.2\mingw81_64\include\QtCore -Itemp\moc -Itemp\ui -I/include -IC:\Qt\5.15.2\mingw81_64\mkspecs\win32-g++ 
 LINKER      =        g++
 LFLAGS        =        -Wl,-subsystem,windows -mthreads
-LIBS        =        -LD:\work\Qt\MicroDetector\3rdParty\hdf5\C++\lib -lhdf5 -lUser32 -lGdi32 C:\Qt\5.15.2\mingw81_64\lib\libQt5Svg.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Widgets.a C:\Qt\5.15.2\mingw81_64\lib\libQt5WinExtras.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Gui.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Network.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Concurrent.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Core.a temp\obj\SimulatorProd_resource_res.o  -lmingw32 C:\Qt\5.15.2\mingw81_64\lib\libqtmain.a -LC:\openssl\lib -LC:\Utils\my_sql\mysql-5.7.25-winx64\lib -LC:\Utils\postgresql\pgsql\lib -lshell32 
+LIBS        =        -LD:\work\Qt\MicroDetector\3rdParty\hdf5\C++\lib -lhdf5 -lUser32 -lGdi32 -lws2_32 C:\Qt\5.15.2\mingw81_64\lib\libQt5Svg.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Widgets.a C:\Qt\5.15.2\mingw81_64\lib\libQt5WinExtras.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Gui.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Network.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Concurrent.a C:\Qt\5.15.2\mingw81_64\lib\libQt5Core.a temp\obj\SimulatorProd_resource_res.o  -lmingw32 C:\Qt\5.15.2\mingw81_64\lib\libqtmain.a -LC:\openssl\lib -LC:\Utils\my_sql\mysql-5.7.25-winx64\lib -LC:\Utils\postgresql\pgsql\lib -lshell32 
 QMAKE         = C:\Qt\5.15.2\mingw81_64\bin\qmake.exe
 DEL_FILE      = del
 CHK_DIR_EXISTS= if not exist
@@ -1064,6 +1064,7 @@ temp/rcc/qrc_resource.cpp: ../../3rdParty/resource/resource.qrc \
 		../../3rdParty/resource/line.png \
 		../../3rdParty/resource/work-on.png \
 		../../3rdParty/resource/zhiling.png \
+		../../3rdParty/resource/splash-oem.png \
 		../../3rdParty/resource/zoom_out.png \
 		../../3rdParty/resource/tip.png \
 		../../3rdParty/resource/canshushezhi-05.png \

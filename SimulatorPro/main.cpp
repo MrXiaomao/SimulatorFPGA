@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
         QGoodWindow::setAppLightTheme();
     }
 
+    QTextCodec::setCodecForLocale(QTextCodec::codecForMib(106));/* Utf8 */
     MainWindow w(isDarkTheme);
     QRect screenRect = QGuiApplication::primaryScreen()->availableGeometry();
     int x = (screenRect.width() - w.width()) / 2;

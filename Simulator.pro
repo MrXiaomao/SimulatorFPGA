@@ -3,6 +3,6 @@ TEMPLATE = subdirs
 SUBDIRS += \
     QZrSinWaveformPlugin \
     SimulatorPro \
-    ZrSpectrumPlugin
+    QZrSpectrumPlugin
 
 CONFIG += ordered

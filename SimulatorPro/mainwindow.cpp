@@ -221,7 +221,12 @@ void CentralWindow::initUi()
             delete menu;
         }
     });
-
+    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, [=](QTreeWidgetItem *item, int /*column*/){
+        openSession(item);
+    });
+    connect(ui->treeWidget, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *current, QTreeWidgetItem */*previous*/){
+        activeSession(current);
+    });
     // 左侧栏
     QPushButton* showSessoinButton = nullptr;
     {
@@ -336,10 +341,6 @@ void CentralWindow::initUi()
         QWidget* w = ui->rightTabWidget->widget(index);
         QTreeWidgetItem* item = mMapTabWidget[w];
         ui->treeWidget->setCurrentItem(item);
-    });
-
-    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, [=](QTreeWidgetItem *item, int /*column*/){        
-        openSession(item);
     });
 
     ui->toolButton_newSession->setDefaultAction(ui->action_newSession);
@@ -572,6 +573,17 @@ void CentralWindow::openSession(QTreeWidgetItem *item)
         mMapTabWidget[w] = item;
     }
 }
+
+void CentralWindow::activeSession(QTreeWidgetItem *item)
+{
+    for (auto iter=mMapTabWidget.begin(); iter!=mMapTabWidget.end(); ++iter){
+        if (iter.value() == item){
+            ui->rightTabWidget->setCurrentWidget(iter.key());
+            return;
+        }
+    }
+}
+
 
 #include <QUuid>
 #include <QMessageBox>

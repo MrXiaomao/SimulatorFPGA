@@ -144,6 +144,8 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
         }
 
         if (mCurrentPlugin){
+            mPlugins[pluginName] = mCurrentPlugin;
+            disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
             QVariantMap parameter = mCurrentPlugin->invoke("readParameters").toMap();
             ui->tableWidget_parameters->clearContents();
             ui->tableWidget_parameters->setRowCount(0);
@@ -288,11 +290,44 @@ void ServerWindow::acceptError(QAbstractSocket::SocketError error)
     emit reportSocketAcceptError(error);
 }
 
-
+#include <winsock2.h>
+#include <mstcpip.h>    // 包含 TCP_KEEPALIVE 结构体定义
 void ServerWindow::newConnection()
 {
     if (mTcpServer->hasPendingConnections()){
         QTcpSocket *tcpClient = mTcpServer->nextPendingConnection();
+        // 设置接收超时（3秒）
+        DWORD recvTimeout = 3000;
+        setsockopt(tcpClient->socketDescriptor(), SOL_SOCKET, SO_RCVTIMEO,
+                   (const char*)&recvTimeout, sizeof(recvTimeout));
+        // 设置发送超时（3秒）
+        DWORD sendTimeout = 3000;
+        setsockopt(tcpClient->socketDescriptor(), SOL_SOCKET, SO_SNDTIMEO,
+                   (const char*)&sendTimeout, sizeof(sendTimeout));
+        // 构造保活参数结构体
+        tcp_keepalive keepAlive = {0};
+        keepAlive.onoff = TRUE;               // 启用保活
+        keepAlive.keepalivetime = 1000;      // 空闲1秒后开始探测（单位：ms）
+        keepAlive.keepaliveinterval = 1000;   // 探测间隔1秒（单位：ms）
+
+        // 调用 WSAIoctl 设置参数
+        DWORD bytesReturned = 0;
+        int result = WSAIoctl(
+            tcpClient->socketDescriptor(),  // QT socket 底层句柄
+            SIO_KEEPALIVE_VALS,                // 控制码：设置保活参数
+            &keepAlive,                        // 输入：保活参数结构体
+            sizeof(keepAlive),                 // 输入大小
+            NULL,                              // 输出缓冲区（无需）
+            0,                                 // 输出大小
+            &bytesReturned,                    // 实际输出字节数
+            NULL,                              // 重叠结构（同步调用时为 NULL）
+            NULL                               // 完成例程（同步调用时为 NULL）
+            );
+
+        if (result == SOCKET_ERROR) {
+            qDebug() << "设置保活参数失败，错误码：" << WSAGetLastError();
+        }
+
         mTcpClient = tcpClient;
         connect(tcpClient, SIGNAL(readyRead()), this, SLOT(readyRead()));
         connect(tcpClient, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error(QAbstractSocket::SocketError)));

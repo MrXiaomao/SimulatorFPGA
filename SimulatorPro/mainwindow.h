@@ -1,4 +1,4 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
@@ -100,6 +100,7 @@ private:
     void loadTreeChildNode(QTreeWidgetItem*);
     void restoreSettings();
     void openSession(QTreeWidgetItem *item);
+    void activeSession(QTreeWidgetItem *item);
     void saveSessionSettings();
     QPixmap maskPixmap(QPixmap, QColor clrMask);
     QPixmap maskPixmap(QString, QColor clrMask);

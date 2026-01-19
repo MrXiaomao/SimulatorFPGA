@@ -181,6 +181,7 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
         }
 
         if (mCurrentPlugin){
+            mPlugins[pluginName] = mCurrentPlugin;
             disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
             connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
                 if (event == "waveform" || event == "spectrum"){
@@ -588,9 +589,6 @@ void ClientWindow::replyNumberOfPackets(quint64& numberOfPackets)
 
 void ClientWindow::replyFileInfo(quint32& fileSize, quint64& totalPackets)
 {
-    if (mTcpClient == nullptr)
-        return;
-
     updateTableCell(3, QString::number(totalPackets));
     updateTableCell(4, QString::number(fileSize));
 }

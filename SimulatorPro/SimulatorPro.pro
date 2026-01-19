@@ -128,3 +128,5 @@ CONFIG(debug, debug|release) {
 
 RESOURCES += \
     lresource.qrc
+
+LIBS += -lws2_32

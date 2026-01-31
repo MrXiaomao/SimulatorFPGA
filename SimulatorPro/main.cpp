@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
     QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+    //QApplication::setAttribute(Qt::AA_Use96Dpi);
 
     QApplication a(argc, argv);
     QApplication::setApplicationName("Fpga模拟器");//Fpga仿真模拟器

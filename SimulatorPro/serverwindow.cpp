@@ -4,8 +4,9 @@
 #include <QNetworkInterface>
 #include <QFileDialog>
 #include <QAction>
-#include <QSplitter>
 #include <QMenu>
+#include <QSplitter>
+#include <QToolTip>
 #include "pluginmanager.h"
 
 ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
@@ -48,6 +49,9 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
     ui->comboBox_ip->addItem("127.0.0.1");
     ui->comboBox_ip->addItem("0.0.0.0");
 
+    connect(this, &ServerWindow::reportRecvLog, this, &ServerWindow::replyRecvLog);
+    connect(this, &ServerWindow::reportSendLog, this, &ServerWindow::replySendLog);
+
     ui->pushButton_start->setEnabled(true);
     ui->pushButton_stop->setEnabled(false);
     mTcpServer = new QTcpServer(this);
@@ -59,9 +63,9 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
     connect(ui->toolButton_add, &QToolButton::clicked, this, [=](){
         int row = ui->tableWidget->rowCount();
         ui->tableWidget->setRowCount(row + 1);
-        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(""));
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(""));
-        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(""));
+        ui->tableWidget->setItem(row, 0, new QTableWidgetItem("指令"));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem("00 00 00 00"));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(""));        
         ui->tableWidget->setCurrentItem(ui->tableWidget->item(row, 0));
     });
     connect(ui->toolButton_remove, &QToolButton::clicked, this, [=](){
@@ -81,12 +85,43 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
         ui->tableWidget->setRowCount(0);
     });
 
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    //ui->tableWidget->setColumnWidth(0, 50);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->tableWidget->setMouseTracking(true);
+    // connect(ui->tableWidget, &QTableWidget::entered, this, [=](const QModelIndex &index){
+    //     QToolTip::showText(QCursor::pos(), index.data().toString());
+    // });
+    connect(ui->tableWidget, &QTableWidget::cellEntered, this, [=](int row, int col){
+        if (col == 0)
+            return;
+
+        QTableWidgetItem* item = ui->tableWidget->item(row, col);
+        if(item == nullptr) {
+            return;
+        }
+
+        QToolTip::showText(QCursor::pos(), item->text());
+    });
 
     ui->tableWidget_parameters->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->tableWidget_parameters->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->tableWidget_parameters->setMouseTracking(true);
+    // connect(ui->tableWidget_parameters, &QTableWidget::entered, this, [=](const QModelIndex &index){
+    //     QToolTip::showText(QCursor::pos(), index.data().toString());
+    // });
+    connect(ui->tableWidget_parameters, &QTableWidget::cellEntered, this, [=](int row, int col){
+        if (col == 0)
+            return;
+
+        QTableWidgetItem* item = ui->tableWidget->item(row, col);
+        if(item == nullptr) {
+            return;
+        }
+
+        QToolTip::showText(QCursor::pos(), item->text());
+    });
 
     this->load();
 
@@ -97,12 +132,18 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
         serverData->askCommands.clear();
         serverData->ackCommands.clear();
         for (int i=0; i<ui->tableWidget->rowCount(); ++i){
-            QString text0 = ui->tableWidget->item(i, 0)->text();
-            QString text1 = ui->tableWidget->item(i, 1)->text();
-            QString text2 = ui->tableWidget->item(i, 2)->text();
-            serverData->commandsName << text0.trimmed();
-            serverData->askCommands << text1.trimmed();
-            serverData->ackCommands << text2.trimmed();
+            if (ui->tableWidget->item(i, 0)){
+                QString text0 = ui->tableWidget->item(i, 0)->text();
+                serverData->commandsName << text0.trimmed();
+            }
+            if (ui->tableWidget->item(i, 1)){
+                QString text1 = ui->tableWidget->item(i, 1)->text();
+                serverData->askCommands << text1.trimmed();
+            }
+            if (ui->tableWidget->item(i, 2)){
+                QString text2 = ui->tableWidget->item(i, 2)->text();
+                serverData->ackCommands << text2.trimmed();
+            }
         }
         serverData->save();
     });
@@ -130,7 +171,9 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
     connect(ui->comboBox_pluginName, &QComboBox::currentTextChanged, this, [=](const QString &){
         //保存现在的参数列表值
         for (int i=0; i<ui->tableWidget_parameters->rowCount(); ++i){
-            mTempParams[ui->tableWidget_parameters->item(i, 0)->text()] = ui->tableWidget_parameters->item(i, 1)->text();
+            if (ui->tableWidget_parameters->cellWidget(i, 1)->inherits("QLineEdit"))
+                mTempParams[ui->tableWidget_parameters->item(i, 0)->text()] = qobject_cast<QLineEdit*>(ui->tableWidget_parameters->cellWidget(i, 1))->text();
+            //mTempParams[ui->tableWidget_parameters->item(i, 0)->text()] = ui->tableWidget_parameters->item(i, 1)->text();
         }
 
         QString pluginName = ui->comboBox_pluginName->currentText();
@@ -146,6 +189,20 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
         if (mCurrentPlugin){
             mPlugins[pluginName] = mCurrentPlugin;
             disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
+            connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
+                if (event == "waveform" || event == "spectrum"){
+                    QByteArray waveformBytes = data["data"].toByteArray();
+                    quint64 numberOfPackets = data["numberOfPackets"].toULongLong();
+                    QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
+                    QMetaObject::invokeMethod(this, "reportNumberOfPackets", Qt::DirectConnection, Q_ARG(quint64&, numberOfPackets));
+                }
+                else if (event == "fileInfo"){
+                    quint32 fileSize = data["fileSize"].toUInt();
+                    quint64 totalpacketsNum = data["totalPackets"].toULongLong();
+                    QMetaObject::invokeMethod(this, "reportFileInfo", Qt::DirectConnection, Q_ARG(quint32&, fileSize), Q_ARG(quint64&, totalpacketsNum));
+                }
+            });
+
             QVariantMap parameter = mCurrentPlugin->invoke("readParameters").toMap();
             ui->tableWidget_parameters->clearContents();
             ui->tableWidget_parameters->setRowCount(0);
@@ -156,10 +213,11 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
                     QTableWidgetItem* item0 = new QTableWidgetItem(iter.key());
                     item0->setFlags(item0->flags() & ~Qt::ItemIsEditable);//禁止编辑
                     ui->tableWidget_parameters->setItem(row, 0, item0);
-                    // QTableWidgetItem* item1 = new QTableWidgetItem(iter.value().toString());
-                    // ui->tableWidget_parameters->setItem(row, 1, item1);
+                    //QTableWidgetItem* item1 = new QTableWidgetItem(iter.value().toString());
+                    //ui->tableWidget_parameters->setItem(row, 1, item1);
+                    //这里替换成QLineEdit，方便选择文件名
                     QLineEdit *lineEdit = new QLineEdit(iter.value().toString());
-                    if (iter.key().contains(tr("文件"))){
+                    if (iter.key().contains(tr("路径"))){
                         QAction *action = lineEdit->addAction(QIcon(":/open.png"), QLineEdit::TrailingPosition);
                         QToolButton* button = qobject_cast<QToolButton*>(action->associatedWidgets().last());
                         button->setCursor(QCursor(Qt::PointingHandCursor));
@@ -179,6 +237,8 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
                         if (ui->tableWidget_parameters->cellWidget(row, 1)->inherits("QLineEdit"))
                             qobject_cast<QLineEdit*>(ui->tableWidget_parameters->cellWidget(row, 1))->setText(constIter.value().toString());
                     }
+
+                    // 后面可扩展升级增加参数数据类型，如QFile、QString、double、int，QComboBox
                 }
             }
         }
@@ -193,6 +253,7 @@ ServerWindow::ServerWindow(ServerData* data, QWidget *parent)
 
     connect(this, &ServerWindow::reportTransferData, this, &ServerWindow::replyTransferData);
     connect(this, &ServerWindow::reportNumberOfPackets, this, &ServerWindow::replyNumberOfPackets);
+    connect(this, &ServerWindow::reportFileInfo, this, &ServerWindow::replyFileInfo);
 }
 
 ServerWindow::~ServerWindow()
@@ -216,6 +277,7 @@ void ServerWindow::load()
     ui->lineEdit_startCommand->setText(serverData->startCommand);
     ui->lineEdit_stopCommand->setText(serverData->stopCommand);
     ui->lineEdit_externTriggerCommand->setText(serverData->externTriggerCommand);
+    ui->checkBox_loopback->setChecked(serverData->enableLoopback);
 
     ui->tableWidget->clearContents();
     ui->tableWidget->setRowCount(serverData->commandsName.size());
@@ -277,8 +339,13 @@ void ServerWindow::on_pushButton_start_clicked()
 
 void ServerWindow::on_pushButton_stop_clicked()
 {
-    this->stopTransfer(mTcpClient);
-    mTcpClient = nullptr;
+    if (mTcpClient)
+    {
+        this->stopTransfer(mTcpClient);
+        mTcpClient->close();
+        mTcpClient = nullptr;
+    }
+
     mTcpServer->close();
     ui->pushButton_start->setEnabled(true);
     ui->pushButton_stop->setEnabled(false);
@@ -341,12 +408,15 @@ void ServerWindow::newConnection()
 
 void ServerWindow::error(QAbstractSocket::SocketError)
 {
-    QTcpSocket *tcpClient = qobject_cast<QTcpSocket*>(sender());
+    //QTcpSocket *tcpClient = qobject_cast<QTcpSocket*>(sender());
+    if (nullptr == mTcpClient)
+        return;
 
     QString log = QString("Client %1 :%2 offline.").arg(mTcpClient->peerAddress().toString()).arg(mTcpClient->peerPort());
     writeLog(log);
 
-    this->stopTransfer(tcpClient);
+    this->stopTransfer(mTcpClient);
+    mTcpClient->close();
     mTcpClient = nullptr;
 }
 
@@ -376,12 +446,12 @@ bool ServerWindow::stringEqual(const QString &strA/*目标*/, const QString &str
 
 void ServerWindow::readyRead()
 {
-    QTcpSocket *tcpClient = qobject_cast<QTcpSocket*>(sender());
+    //QTcpSocket *tcpClient = qobject_cast<QTcpSocket*>(sender());
     //读取新的数据
-    QByteArray rawData = tcpClient->readAll();
-    QString command = rawData.toHex(' ');
+    QByteArray rawData = mTcpClient->readAll();
+    QString command = rawData.toHex(' ').toUpper();
 
-    writeRecvLog(rawData);
+    emit reportRecvLog(rawData);
     bool exists = false;
     while (command.length() > 0)
     {
@@ -393,9 +463,9 @@ void ServerWindow::readyRead()
                 {
                     QByteArray sendCommand = QByteArray::fromHex(mServerData->ackCommands[i].toLocal8Bit());
                     if (!sendCommand.isEmpty()){
-                        tcpClient->write(sendCommand);
+                        mTcpClient->write(sendCommand);
 
-                        writeSendLog(sendCommand);
+                        emit reportSendLog(sendCommand);
                     }
 
                     command = command.remove(0, mServerData->askCommands[i].trimmed().length()).trimmed();
@@ -409,31 +479,41 @@ void ServerWindow::readyRead()
             break;
     }
 
-    if (command.toUpper() == mServerData->startCommand.trimmed().toUpper()){
+    if (command.trimmed() == mServerData->startCommand.trimmed())
+    {
         QByteArray sendCommand = QByteArray::fromHex(mServerData->startCommand.toLocal8Bit());
         if (mServerData->enableLoopback){
-            tcpClient->write(sendCommand);
-            writeSendLog(sendCommand);
+            mTcpClient->write(sendCommand);
+            emit reportSendLog(sendCommand);
         }
 
         if (!ui->externTriggerCommand->isChecked())
-            this->startTransfer(tcpClient);
+            this->startTransfer(mTcpClient);
         return;
     }
 
-    if (command.toUpper() == mServerData->stopCommand.trimmed().toUpper()){
-        this->stopTransfer(tcpClient);
+    if (command.trimmed() == mServerData->stopCommand.trimmed())
+    {
+        this->stopTransfer(mTcpClient);
 
         if (mServerData->enableLoopback){
             QByteArray sendCommand = QByteArray::fromHex(mServerData->stopCommand.toLocal8Bit());
-            tcpClient->write(sendCommand);
-            writeSendLog(sendCommand);
+            mTcpClient->write(sendCommand);
+            emit reportSendLog(sendCommand);
         }
+
         return;
+    }
+
+    //解析失败的指令，按照原路返回去吧
+    if (ui->checkBox_loopback->isChecked())
+    {
+        mTcpClient->write(rawData);
+        emit reportSendLog(rawData, true);
     }
 }
 
-void ServerWindow::writeRecvLog(QByteArray& command)
+void ServerWindow::replyRecvLog(QByteArray& command)
 {
     QString strDateTime = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     strDateTime += QString("# RECV HEX/%1").arg(command.size());
@@ -450,7 +530,7 @@ void ServerWindow::writeRecvLog(QByteArray& command)
 #endif
 }
 
-void ServerWindow::writeSendLog(QByteArray& command, bool isException/* = false*/)
+void ServerWindow::replySendLog(QByteArray& command, bool isException/* = false*/)
 {
     QString strDateTime = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     strDateTime += QString("# SEND HEX/%1").arg(command.size());
@@ -477,16 +557,6 @@ void ServerWindow::startTransfer(QTcpSocket* /*tcpSocket*/)
         mTimer->start(50);
 
         mCurrentPlugin->invoke("writeParameters", mServerData->params);
-        connect(mCurrentPlugin, &IPlugin::notifyEvent, this, [=](const QString& event, const QVariantMap& data){
-            if (event == "waveform"){
-                QByteArray waveformBytes = data["data"].toByteArray();
-                QMetaObject::invokeMethod(this, "reportTransferData", Qt::DirectConnection, Q_ARG(QByteArray&, waveformBytes));
-            }
-            else if (event == "numberOfPackets"){
-                quint64 numberOfPackets = data["data"].toULongLong();
-                QMetaObject::invokeMethod(this, "reportNumberOfPackets", Qt::DirectConnection, Q_ARG(quint64&, numberOfPackets));
-            }
-        });
         mCurrentPlugin->initialize();
     }
 }
@@ -498,28 +568,88 @@ void ServerWindow::stopTransfer(QTcpSocket* /*tcpSocket*/)
 
     mTimer->stop();
     if (mCurrentPlugin){
-        disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
+        //disconnect(mCurrentPlugin, &IPlugin::notifyEvent, this, nullptr);
         mCurrentPlugin->shutdown();
     }
 }
 
-void ServerWindow::replyTransferData(QTcpSocket* tcpSocket, QByteArray& data)
+void ServerWindow::replyTransferData(/*QTcpSocket* tcpSocket, */QByteArray& data)
 {
-    if (tcpSocket->state() == QAbstractSocket::ConnectedState){
-        tcpSocket->write(data);
-        tcpSocket->waitForBytesWritten(100);
+    if (mTcpClient == nullptr)
+        return;
+
+    if (mTcpClient->state() == QAbstractSocket::ConnectedState){
+        mTcpClient->write(data);
+        mTcpClient->waitForBytesWritten(100);
     }
-    else if (tcpSocket->state() == QAbstractSocket::UnconnectedState){
+    else if (mTcpClient->state() == QAbstractSocket::UnconnectedState){
         //网络已经断开了
 
         //停止发送
-        stopTransfer(tcpSocket);
+        stopTransfer(mTcpClient);
     }
 }
 
 void ServerWindow::replyNumberOfPackets(quint64& numberOfPackets)
 {
     ui->lcdNumber_numberOfPackets->display(QString::number(numberOfPackets));
+}
+
+void ServerWindow::replyFileInfo(quint32& fileSize, quint64& totalPackets)
+{
+    updateTableCell(3, QString::number(totalPackets));
+    updateTableCell(4, QString::number(fileSize));
+}
+
+// 更新指定行、第2列（索引1）的内容
+bool ServerWindow::updateTableCell(int row, const QString& text)
+{
+    const int column = 1; // 第2列索引为1
+
+    // 检查行有效性
+    if (row < 0 || row >= ui->tableWidget_parameters->rowCount()) {
+        qWarning() << "行索引无效:" << row << "，表格总行数:" << ui->tableWidget_parameters->rowCount();
+        return false;
+    }
+
+    // 检查表格是否有足够的列
+    if (ui->tableWidget_parameters->columnCount() <= column) {
+        qWarning() << "表格列数不足，当前列数:" << ui->tableWidget_parameters->columnCount();
+        return false;
+    }
+
+    qDebug() << "正在更新第" << row << "行第2列，内容:" << text;
+
+    // 获取或创建第2列的 QLineEdit
+    QWidget* widget = ui->tableWidget_parameters->cellWidget(row, column);
+    if (widget && widget->inherits("QLineEdit")) {
+        QLineEdit* lineEdit = qobject_cast<QLineEdit*>(widget);
+        lineEdit->setText(text);
+        qDebug() << "成功更新现有QLineEdit";
+        return true;
+    }
+    else {
+        // 创建新的 QLineEdit
+        QLineEdit* lineEdit = new QLineEdit(text);
+
+        // 如果是文件路径列，添加文件选择按钮
+        QTableWidgetItem* keyItem = ui->tableWidget_parameters->item(row, 0);
+        if (keyItem && keyItem->text().contains(tr("路径"))) {
+            QAction *action = lineEdit->addAction(QIcon(":/open.png"), QLineEdit::TrailingPosition);
+            QToolButton* button = qobject_cast<QToolButton*>(action->associatedWidgets().last());
+            button->setCursor(QCursor(Qt::PointingHandCursor));
+            connect(button, &QToolButton::pressed, this, [=](){
+                QString fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), lineEdit->text(), tr("所有文件(*.*)"));
+                if (!fileName.isEmpty() && QFileInfo::exists(fileName)) {
+                    lineEdit->setText(fileName);
+                }
+            });
+        }
+
+        ui->tableWidget_parameters->setCellWidget(row, column, lineEdit);
+        qDebug() << "成功创建新的QLineEdit";
+        return true;
+    }
 }
 
 void ServerWindow::on_toolButton_send_clicked()
@@ -533,6 +663,7 @@ void ServerWindow::on_toolButton_send_clicked()
 
 void ServerWindow::writeLog(const QString& log)
 {
+    qDebug() << log;
     QString strDateTime = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     strDateTime += QString("# %1").arg(log);
 
@@ -604,4 +735,3 @@ void ServerWindow::on_pushButton_preProcess_clicked()
 
     QApplication::restoreOverrideCursor();
 }
-

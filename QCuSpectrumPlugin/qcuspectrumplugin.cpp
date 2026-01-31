@@ -1,4 +1,4 @@
-﻿#include "qzrspectrumplugin.h"
+﻿#include "qcuspectrumplugin.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QRandomGenerator>
@@ -6,10 +6,10 @@
 #include <QFile>
 #include <QtConcurrent>
 
-// 快速统计0xFF FF AA B1 0xFF FF CC D1的个数（数据包总数）
+// 快速统计0x00 00 AA B2 0x00 00 CC D2的个数（数据包总数）
 // 帧头/帧尾定义（小端存储，按字节顺序）
-const uint8_t FRAME_HEADER[] = {0xFF, 0xFF, 0xAA, 0xB1};
-const uint8_t FRAME_TAIL[] = {0xFF, 0xFF, 0xCC, 0xD1};
+const uint8_t FRAME_HEADER[] = {0x00, 0x00, 0xAA, 0xB3};
+const uint8_t FRAME_TAIL[] = {0x00, 0x00, 0xCC, 0xD3};
 const size_t HEADER_LEN = sizeof(FRAME_HEADER);
 const size_t TAIL_LEN = sizeof(FRAME_TAIL);
 enum FrameState { STATE_IDLE, STATE_HEADER, STATE_DATA, STATE_TAIL };
@@ -63,12 +63,12 @@ int countFramesWithStateMachine(uchar* buffer, qint64 size/*const QVector<uint8_
     return frameCount;
 }
 
-QZrSpectrumPlugin::QZrSpectrumPlugin()
+QCuSpectrumPlugin::QCuSpectrumPlugin()
     : mInitialized(false)
 {
 }
 
-QZrSpectrumPlugin::~QZrSpectrumPlugin() {
+QCuSpectrumPlugin::~QCuSpectrumPlugin() {
     if (mTimerThread){
         mTimerThread->requestInterruption();
         mTimerThread->exit(0);
@@ -77,13 +77,13 @@ QZrSpectrumPlugin::~QZrSpectrumPlugin() {
     }
 }
 
-IPlugin* QZrSpectrumPlugin::clone() {
-    IPlugin* plugin = new QZrSpectrumPlugin();
+IPlugin* QCuSpectrumPlugin::clone() {
+    IPlugin* plugin = new QCuSpectrumPlugin();
     return plugin;
 }
 
 #include <QtEndian>
-bool QZrSpectrumPlugin::initialize() {
+bool QCuSpectrumPlugin::initialize() {
     if (mInitialized)
         return true; // 避免重复初始化
 
@@ -159,7 +159,7 @@ bool QZrSpectrumPlugin::initialize() {
                         if (headerMatchPos == HEADER_LEN) {
                             // 帧头匹配完成，开始读取数据
                             state = FrameState::STATE_DATA;
-                            specttrumBytes.push_back(QByteArray::fromHex("FF FF AA B1"));
+                            specttrumBytes.push_back(QByteArray::fromHex("00 00 AA B3"));
                             headerMatchPos = 0; // 重置帧头匹配进度
                             break;
                         }
@@ -222,12 +222,12 @@ bool QZrSpectrumPlugin::initialize() {
     mTimerThread->start();
 
     mInitialized = true;
-    qDebug() << "QZrSpectrumPlugin initialized";
+    qDebug() << "QCuSpectrumPlugin initialized";
     return true;
 }
 
 // 更新文件信息显示
-void QZrSpectrumPlugin::updateFileInfo()
+void QCuSpectrumPlugin::updateFileInfo()
 {
     if (binaryFilePath.isEmpty() || !QFile::exists(binaryFilePath)) {
         return;
@@ -253,7 +253,7 @@ void QZrSpectrumPlugin::updateFileInfo()
 }
 
 
-qint64 QZrSpectrumPlugin::countPacketsInFile(const QString& filePath)
+qint64 QCuSpectrumPlugin::countPacketsInFile(const QString& filePath)
 {
     qDebug() <<QString("开始统计文件数据包数量: %1").arg(filePath);
 
@@ -300,7 +300,7 @@ qint64 QZrSpectrumPlugin::countPacketsInFile(const QString& filePath)
 // 并行统计 - 修正为检查数据包长度
 // 测试发现该方法对边界处理有问题，会导致数据包个数漏记数（在与MATLAB读取文件代码对比发现到的问题）
 // 但是该方法计算速度非常快，后续发送数据包并不受此影响。所以更建议用该方法。
-qint64 QZrSpectrumPlugin::countPacketsParallel(uchar* data, qint64 size)
+qint64 QCuSpectrumPlugin::countPacketsParallel(uchar* data, qint64 size)
 {
     const int threadCount = QThread::idealThreadCount();
     const qint64 chunkSize = size / threadCount;
@@ -328,7 +328,7 @@ qint64 QZrSpectrumPlugin::countPacketsParallel(uchar* data, qint64 size)
     return total;
 }
 
-void QZrSpectrumPlugin::shutdown(){
+void QCuSpectrumPlugin::shutdown(){
     if (mTimerThread){
         mTimerThread->requestInterruption();
         mTimerThread->wait();
@@ -336,14 +336,14 @@ void QZrSpectrumPlugin::shutdown(){
     }
 
     mInitialized = false;
-    qDebug() << "QZrSpectrumPlugin shutdown";
+    qDebug() << "QCuSpectrumPlugin shutdown";
 }
 
-QStringList QZrSpectrumPlugin::supportedMethods() const{
+QStringList QCuSpectrumPlugin::supportedMethods() const{
     return {"connect", "disconnect", "readParameters", "writeParameters"}; // 声明支持的方法
 }
 
-QVariant QZrSpectrumPlugin::invoke(const QString& method, const QVariantMap& params){
+QVariant QCuSpectrumPlugin::invoke(const QString& method, const QVariantMap& params){
     if (method == "connect") {
         return connectDevice(params);
     }
@@ -356,14 +356,14 @@ QVariant QZrSpectrumPlugin::invoke(const QString& method, const QVariantMap& par
     }
     else if (method == "preProcess") {
         //预处理
-        binaryFilePath = params.value("[3]锆活化测试数据路径").toString();
+        binaryFilePath = params.value("[3]铜活化测试数据路径").toString();
         return preProcess();
     }
 
     return QVariant(); // 未知方法返回空
 }
 
-QVariant QZrSpectrumPlugin::connectDevice(const QVariantMap& params){
+QVariant QCuSpectrumPlugin::connectDevice(const QVariantMap& params){
     Q_UNUSED(params); // 示例中无需参数
     QVariantMap result;
     result["success"] = true;
@@ -371,7 +371,7 @@ QVariant QZrSpectrumPlugin::connectDevice(const QVariantMap& params){
     return result;
 }
 
-QVariant QZrSpectrumPlugin::disconnectDevice(const QVariantMap& params){
+QVariant QCuSpectrumPlugin::disconnectDevice(const QVariantMap& params){
     Q_UNUSED(params);
     QVariantMap result;
     result["success"] = true;
@@ -379,34 +379,34 @@ QVariant QZrSpectrumPlugin::disconnectDevice(const QVariantMap& params){
     return result;
 }
 
-QVariant QZrSpectrumPlugin::readParameters(const QVariantMap& params){
+QVariant QCuSpectrumPlugin::readParameters(const QVariantMap& params){
     Q_UNUSED(params);
 
     QVariantMap result;
     result["[1]是否循环发送"] = mCycleTransfer;//前面带个序号是为了禁止自动排序，因为QMap是排序的
     result["[2]发送周期/ms"] = mSampleFrequency;
-    result["[3]锆活化测试数据路径"] = binaryFilePath;
+    result["[3]铜活化测试数据路径"] = binaryFilePath;
     result["[4]总能谱个数"] = totalPackets;
     result["[5]文件大小/MB"] = m_fileSize;
     return result;
 }
 
-QVariant QZrSpectrumPlugin::writeParameters(const QVariantMap& params){
+QVariant QCuSpectrumPlugin::writeParameters(const QVariantMap& params){
     mCycleTransfer = params.value("[1]是否循环发送").toBool();
     mSampleFrequency = params.value("[2]发送周期/ms").toUInt();
-    binaryFilePath = params.value("[3]锆活化测试数据路径").toString();
+    binaryFilePath = params.value("[3]铜活化测试数据路径").toString();
     // totalPackets = params.value("[4]总能谱个数").toULongLong();
     // m_fileSize = params.value("[5]文件大小/MB").toUInt();
 
-    qDebug() << "QZrSpectrumPlugin writing parameters:" << params;
+    qDebug() << "QCuSpectrumPlugin writing parameters:" << params;
 
     QVariantMap result;
     result["success"] = true;
-    result["message"] = "QZrSpectrumPlugin parameters written successfully";
+    result["message"] = "QCuSpectrumPlugin parameters written successfully";
     return result;
 }
 
-QVariant QZrSpectrumPlugin::preProcess()
+QVariant QCuSpectrumPlugin::preProcess()
 {
     updateFileInfo(); // 更新文件信息
 
@@ -418,6 +418,6 @@ QVariant QZrSpectrumPlugin::preProcess()
 
     QVariantMap result;
     result["success"] = true;
-    result["message"] = "QZrSpectrumPlugin preProcess is completed";
+    result["message"] = "QCuSpectrumPlugin preProcess is completed";
     return result;
 }

@@ -1,5 +1,5 @@
-﻿#ifndef QZRSPECTRUMPLUGIN_H
-#define QZRSPECTRUMPLUGIN_H
+﻿#ifndef QCUSPECTRUMPLUGIN_H
+#define QCUSPECTRUMPLUGIN_H
 
 #include <QObject>
 #include "iplugin.h"
@@ -8,18 +8,18 @@
 #include <QtEndian> //qFromBigEndian需要
 #include <cstring>  // 用于内存初始化（如memset）
 
-class QZrSpectrumPlugin : public IPlugin{
+class QCuSpectrumPlugin : public IPlugin{
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "QZrSinWaveform.IPlugin")
+    Q_PLUGIN_METADATA(IID "QCuSinWaveform.IPlugin")
     Q_INTERFACES(IPlugin)
 
 public:
-    QZrSpectrumPlugin();
-    ~QZrSpectrumPlugin();
+    QCuSpectrumPlugin();
+    ~QCuSpectrumPlugin();
 
     // IPlugin 接口实现
     QString name() const override{
-        return "锆活化工程-活化能谱(新)";
+        return "铜活化工程-活化能谱";
     }
 
     // 插件名称
@@ -35,7 +35,7 @@ public:
 
     // 分类
     QString category() const override{
-        return "锆活化工程";
+        return "铜活化工程";
     }
 
     IPlugin* clone() override;
@@ -74,4 +74,4 @@ private:
     QLiteThread* mTimerThread = nullptr;
 };
 
-#endif // QZRSPECTRUMPLUGIN_H
+#endif // QCUSPECTRUMPLUGIN_H

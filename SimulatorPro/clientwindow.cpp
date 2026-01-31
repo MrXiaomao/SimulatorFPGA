@@ -106,7 +106,6 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
 
     ui->tableWidget_parameters->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->tableWidget_parameters->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-
     ui->tableWidget_parameters->setMouseTracking(true);
     // connect(ui->tableWidget_parameters, &QTableWidget::entered, this, [=](const QModelIndex &index){
     //     QToolTip::showText(QCursor::pos(), index.data().toString());
@@ -132,12 +131,18 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
         clientData->askCommands.clear();
         clientData->ackCommands.clear();
         for (int i=0; i<ui->tableWidget->rowCount(); ++i){
-            QString text0 = ui->tableWidget->item(i, 0)->text();
-            QString text1 = ui->tableWidget->item(i, 1)->text();
-            QString text2 = ui->tableWidget->item(i, 2)->text();
-            clientData->commandsName << text0.trimmed();
-            clientData->askCommands << text1.trimmed();
-            clientData->ackCommands << text2.trimmed();
+            if (ui->tableWidget->item(i, 0)){
+                QString text0 = ui->tableWidget->item(i, 0)->text();
+                clientData->commandsName << text0.trimmed();
+            }
+            if (ui->tableWidget->item(i, 1)){
+                QString text1 = ui->tableWidget->item(i, 1)->text();
+                clientData->askCommands << text1.trimmed();
+            }
+            if (ui->tableWidget->item(i, 2)){
+                QString text2 = ui->tableWidget->item(i, 2)->text();
+                clientData->ackCommands << text2.trimmed();
+            }
         }
         clientData->save();
     });
@@ -273,6 +278,7 @@ void ClientWindow::load()
     ui->lineEdit_stopCommand->setText(clientData->stopCommand);
     ui->lineEdit_externTriggerCommand->setText(clientData->externTriggerCommand);
     ui->checkBox_bindSocket->setChecked(mClientData->bindSocket);
+    ui->checkBox_loopback->setChecked(clientData->enableLoopback);
 
     ui->tableWidget->clearContents();
     ui->tableWidget->setRowCount(clientData->commandsName.size());

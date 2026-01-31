@@ -329,6 +329,9 @@ void CentralWindow::initUi()
     itemRoot->setIcon(0, QIcon(":/resource/image/file-folder.png"));
     ui->treeWidget->addTopLevelItem(itemRoot);
     loadTreeChildNode(itemRoot);
+    //itemRoot->setSelected(true);
+    ui->treeWidget->setCurrentItem(itemRoot);
+    activeSession(itemRoot);
 
     connect(ui->rightTabWidget, &QTabWidget::tabCloseRequested, this, [=](int index){
         QWidget* w = ui->rightTabWidget->widget(index);

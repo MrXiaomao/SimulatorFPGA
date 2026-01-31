@@ -2,7 +2,8 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     QZrSinWaveformPlugin \
-    SimulatorPro \
-    QZrSpectrumPlugin
+    QZrSpectrumPlugin \
+    QCuSpectrumPlugin \
+    SimulatorPro
 
 CONFIG += ordered

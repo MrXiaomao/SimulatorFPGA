@@ -124,12 +124,18 @@ public:
     explicit ServerWindow(ServerData* data, QWidget *parent = nullptr);
     ~ServerWindow();
 
+    // 更新指定行、列的内容
+    bool updateTableCell(int row, const QString& text);
+
     Q_SIGNAL void reportSocketAcceptError(QAbstractSocket::SocketError);
     Q_SIGNAL void reportSocketNewConnection(QTcpSocket *tcpClient);
     Q_SIGNAL void reportSocketStarted();
     Q_SIGNAL void reportSocketClosed();
-    Q_SIGNAL void reportTransferData(QTcpSocket*,QByteArray&);
+    Q_SIGNAL void reportTransferData(QByteArray&);
     Q_SIGNAL void reportNumberOfPackets(quint64&);
+    Q_SIGNAL void reportFileInfo(quint32& fileSize, quint64& totalPackets);
+    Q_SIGNAL void reportRecvLog(QByteArray&);
+    Q_SIGNAL void reportSendLog(QByteArray&, bool isException = false);
 
     Q_SLOT void acceptError(QAbstractSocket::SocketError);
     Q_SLOT void newConnection();
@@ -137,13 +143,14 @@ public:
     Q_SLOT void error(QAbstractSocket::SocketError);
     Q_SLOT void readyRead();
 
-    Q_SLOT void writeRecvLog(QByteArray&);
-    Q_SLOT void writeSendLog(QByteArray&, bool isException = false);
+    Q_SLOT void replyRecvLog(QByteArray&);
+    Q_SLOT void replySendLog(QByteArray&, bool isException = false);
 
     Q_SLOT void startTransfer(QTcpSocket*);
     Q_SLOT void stopTransfer(QTcpSocket*);
-    Q_SLOT void replyTransferData(QTcpSocket*,QByteArray&);
+    Q_SLOT void replyTransferData(/*QTcpSocket*,*/QByteArray&);
     Q_SLOT void replyNumberOfPackets(quint64&);
+    Q_SLOT void replyFileInfo(quint32& fileSize, quint64& totalPackets);
 
     Q_SLOT void load();
     Q_SLOT void updateData();

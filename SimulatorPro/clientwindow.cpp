@@ -253,6 +253,9 @@ ClientWindow::ClientWindow(ClientData* data, QWidget *parent)
     connect(this, &ClientWindow::reportTransferData, this, &ClientWindow::replyTransferData);
     connect(this, &ClientWindow::reportNumberOfPackets, this, &ClientWindow::replyNumberOfPackets);
     connect(this, &ClientWindow::reportFileInfo, this, &ClientWindow::replyFileInfo);
+
+    // 关联断线重连定时器
+    connect(&m_reconnectTimer, &QTimer::timeout, this, &ClientWindow::onReconnectTimeout);
 }
 
 ClientWindow::~ClientWindow()
@@ -343,29 +346,35 @@ void ClientWindow::on_pushButton_connect_clicked()
     QString log = QString("Connecting to server...");
     writeLog(log);
 
+    mErrorCount = 0;
+    ui->pushButton_connect->setEnabled(false);
+    ui->pushButton_disconnect->setEnabled(true);
+    ui->pushButton_update->setEnabled(true);
     mTcpClient->connectToHost(ui->comboBox_ip->currentText(), ui->spinBox_remotePort->value());
-    mTcpClient->waitForConnected();
-    if (mTcpClient->state() == QAbstractSocket::ConnectedState){
-        ui->pushButton_connect->setEnabled(false);
-        ui->pushButton_disconnect->setEnabled(true);
-        ui->pushButton_update->setEnabled(true);
-    }
-    else {
-        if (mTcpClient->error() == QAbstractSocket::AddressInUseError)
-        {
-            QString log = QString("连接服务器失败，原因：") + mTcpClient->errorString();
-            writeLog(log);
-        }
-        else{
-            QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
-            writeLog(log);
-        }
-    }
+    // mTcpClient->waitForConnected();
+    // if (mTcpClient->state() == QAbstractSocket::ConnectedState){
+    //     ui->pushButton_connect->setEnabled(false);
+    //     ui->pushButton_disconnect->setEnabled(true);
+    //     ui->pushButton_update->setEnabled(true);
+    // }
+    // else {
+    //     if (mTcpClient->error() == QAbstractSocket::AddressInUseError)
+    //     {
+    //         QString log = QString("连接服务器失败，原因：") + mTcpClient->errorString();
+    //         writeLog(log);
+    //     }
+    //     else{
+    //         QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
+    //         writeLog(log);
+    //     }
+    // }
 }
 
 
 void ClientWindow::on_pushButton_disconnect_clicked()
 {
+    m_reconnectTimer.stop();
+
     stopTransfer();
 
     freeSocket();
@@ -380,21 +389,48 @@ void ClientWindow::on_pushButton_disconnect_clicked()
 
 void ClientWindow::error(QAbstractSocket::SocketError error)
 {
-    if (error != QAbstractSocket::SocketTimeoutError){
-        QString log = QString("Server disconnected");
+    if (error == QAbstractSocket::RemoteHostClosedError)
+    {
+        // 服务器主动断开连接
+        QString log = QString("Server disconnected and a reconnection is scheduled in seconds...");
+        writeLog(log);
+    }
+    else if (mErrorCount++ == 0){
+        QString log = QString("请检查服务器端口%1是否开启监听，或者路由项是否被防火墙拦截！").arg(ui->spinBox_remotePort->value());
         writeLog(log);
 
-        ui->pushButton_connect->setEnabled(true);
-        ui->pushButton_disconnect->setEnabled(false);
-        ui->pushButton_update->setEnabled(false);
-        mTcpClient->close();
+        log = QString("连接超时，5秒后将重连...");
+        writeLog(log);
+    } else if (error == QAbstractSocket::AddressInUseError)
+    {
+        QString log = QString("连接服务器失败，原因：") + mTcpClient->errorString();
+        writeLog(log);
+
+        log = QString("连接超时，5秒后将重连...");
+        writeLog(log);
+    }
+    else {
+    //if (error != QAbstractSocket::SocketTimeoutError){
+        QString log = QString("连接超时，5秒后将重连...");
+
+        writeLog(log);
+
+        // ui->pushButton_connect->setEnabled(true);
+        // ui->pushButton_disconnect->setEnabled(false);
+        // ui->pushButton_update->setEnabled(false);
+        // mTcpClient->close();
         this->stopTransfer();
         emit reportSocketError(error);
     }
+
+    startReconnect();
 }
 
 void ClientWindow::connected()
 {
+    mErrorCount = 0;
+    m_reconnectTimer.stop();
+
     QString log = QString("Server connected from local %1 :%2").arg(mTcpClient->peerAddress().toString()).arg(mTcpClient->localPort());
     writeLog(log);
 
@@ -777,3 +813,14 @@ void ClientWindow::on_pushButton_preProcess_clicked()
     QApplication::restoreOverrideCursor();
 }
 
+void ClientWindow::startReconnect() {
+    if (!m_reconnectTimer.isActive()) {
+        m_reconnectTimer.start(5000); // 5秒重连一次
+    }
+}
+
+void ClientWindow::onReconnectTimeout() {
+    if (mTcpClient->state() != QAbstractSocket::ConnectedState) {
+        mTcpClient->connectToHost(ui->comboBox_ip->currentText(), ui->spinBox_remotePort->value());
+    }
+}

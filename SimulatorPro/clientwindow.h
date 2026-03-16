@@ -179,10 +179,16 @@ private:
     QElapsedTimer mElapsedTimer;
     IPlugin* mCurrentPlugin = nullptr;
     QMap<QString, IPlugin*> mPlugins;
+    quint8 mErrorCount = 0;
 
     void reallocSocket();
     void freeSocket();
     bool stringEqual(const QString &strA/*目标*/, const QString &strB/*源*/);
+
+    // 断线重连
+    QTimer m_reconnectTimer;
+    void startReconnect();
+    void onReconnectTimeout();
 };
 
 #endif // CLIENTWINDOW_H
